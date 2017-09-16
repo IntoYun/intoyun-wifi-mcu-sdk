@@ -1,0 +1,15 @@
+# Objects 文件夹
+project/Objects/*
+project/DebugConfig/*
+project/Listings/*
+project/RTE/*
+project/*.scvd
+project/*.lz
+
+# gtags相关文件
+GPATH
+GRTAGS
+GTAGS
+
+# tags
+tags
