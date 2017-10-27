@@ -21,22 +21,42 @@
 
 #include "intoyun_datapoint.h"
 #include "intoyun_protocol.h"
+#include "intoyun_log.h"
+
+#define UINT_MAX    0xFFFFFFFF
 
 typedef struct
 {
     void (*init)(void);
-    void (*setEventCallback)(event_handler_t handler);
-    void (*setMode)(mode_type_t mode, uint32_t timeout);
     void (*loop)(void);
-    void (*setDatapointControl)(dp_transmit_mode_t mode, uint32_t lapse);
-    void (*sendProductInfo)(char *productId, char *hardVer, char *softVer);
 
-    //定义数据点
-    void (*defineDatapointBool)(const uint16_t dpID, dp_permission_t permission, const bool value, dp_policy_t policy, const int lapse);
-    void (*defineDatapointNumber)(const uint16_t dpID, dp_permission_t permission, const double minValue, const double maxValue, const int resolution, const double value, dp_policy_t policy, const int lapse);
-    void (*defineDatapointEnum)(const uint16_t dpID, dp_permission_t permission, const int value, dp_policy_t policy, const int lapse);
-    void (*defineDatapointString)(const uint16_t dpID, dp_permission_t permission, const char *value, dp_policy_t policy, const int lapse);
-    void (*defineDatapointBinary)(const uint16_t dpID, dp_permission_t permission, const uint8_t *value, const uint16_t len, dp_policy_t policy, const int lapse);
+    void (*setEventCallback)(event_handler_t handler);
+    bool (*setModuleMode)(mode_type_t mode, uint32_t timeout);
+    mode_type_t (*getModuleMode)(void);
+    void (*setDatapointControl)(dp_transmit_mode_t mode, uint32_t lapse);
+    void (*setDeviceInfo)(char *productId, char *hardVer, char *softVer);  //设置设备信息
+    void (*getDeviceInfo)(char *productId, char *hardVer, char *softVer);  //获取设备信息
+    void (*getModuleInfo)(char *moduleVersion, char *moduleType, char *deviceId, uint8_t *atMode); //获取模块信息
+    bool (*resetModule)(void);
+    bool (*restoreModule)(void);
+    void (*putPipe)(uint8_t value);
+    bool (*getNetTime)(char *net_time, char *timestamp);
+    uint8_t (*getStatus)(char *ssid, uint32_t *ipAddr, int *rssi);
+}system_t;
+
+typedef struct
+{
+    void (*connect)(void);
+    bool (*connected)(void);
+    void (*disconnect)(void);
+    bool (*disconnected)(void);
+
+        //定义数据点
+    void (*defineDatapointBool)(const uint16_t dpID, dp_permission_t permission, const bool value);
+    void (*defineDatapointNumber)(const uint16_t dpID, dp_permission_t permission, const double minValue, const double maxValue, const int resolution, const double value);
+    void (*defineDatapointEnum)(const uint16_t dpID, dp_permission_t permission, const int value);
+    void (*defineDatapointString)(const uint16_t dpID, dp_permission_t permission, const char *value);
+    void (*defineDatapointBinary)(const uint16_t dpID, dp_permission_t permission, const uint8_t *value, const uint16_t len);
 
     //读取数据点
     read_datapoint_result_t (*readDatapointBool)(const uint16_t dpID, bool *value);
@@ -63,9 +83,15 @@ typedef struct
     void (*sendDatapointBinary)(const uint16_t dpID, const uint8_t *value, uint16_t len);
     void (*sendDatapointAll)(void);
     void (*sendCustomData)(const uint8_t *buffer, uint16_t len);
-}intoyun_t;
+}cloud_t;
 
-extern const intoyun_t IntoYun;
+void delay(uint32_t ms);
+uint32_t millis(void);
+uint32_t timerGetId(void);
+bool timerIsEnd(uint32_t timerID, uint32_t time);
+
+extern const cloud_t Cloud;
+extern const system_t System;
 
 
 #endif /*_INTERFACE_H*/

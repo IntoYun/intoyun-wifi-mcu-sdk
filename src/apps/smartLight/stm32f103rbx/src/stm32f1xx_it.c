@@ -39,26 +39,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_it.h"
+#include "stm32f1xx_hal.h"
+#include "intoyun_interface.h"
 
-/** @addtogroup STM32F1xx_HAL_Examples
-  * @{
-  */
-
-/** @addtogroup GPIO_IOToggle
-  * @{
-  */
-
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-
-/* Private function prototypes -----------------------------------------------*/
-/* Private functions ---------------------------------------------------------*/
-
-/******************************************************************************/
-/*            Cortex-M3 Processor Exceptions Handlers                         */
-/******************************************************************************/
+extern UART_HandleTypeDef huart1; //USART1用于与模组通讯
 
 /**
   * @brief  This function handles NMI exception.
@@ -158,6 +142,12 @@ void SysTick_Handler(void)
     HAL_IncTick();
 }
 
+void USART1_IRQHandler(void)
+{
+    uint8_t c;
+    HAL_UART_Receive(&huart1, &c, 1, 100);
+    System.putPipe(c);
+}
 /******************************************************************************/
 /*                 STM32F1xx Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */

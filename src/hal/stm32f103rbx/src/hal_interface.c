@@ -1,25 +1,55 @@
-
-#include "usart.h"
+#include "stm32f1xx_hal.h"
 #include "intoyun_protocol.h"
 
 UART_HandleTypeDef huart1; //USART1用于与模组通讯
-UART_HandleTypeDef huart2; //USART2 用于调试
+UART_HandleTypeDef huart2; //USART2 用于打印调试信息
 
-
-void USART1_Init(void)
+static void SystemClockConfig(void)
 {
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE; //无奇偶校验位
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  HAL_UART_Init(&huart1);
+    RCC_ClkInitTypeDef clkinitstruct = {0};
+    RCC_OscInitTypeDef oscinitstruct = {0};
+
+    oscinitstruct.OscillatorType  = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_HSI;
+    oscinitstruct.HSEState        = RCC_HSE_ON;
+    oscinitstruct.LSEState        = RCC_LSE_OFF;
+    oscinitstruct.HSIState        = RCC_HSI_ON;
+    oscinitstruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    oscinitstruct.HSEPredivValue    = RCC_HSE_PREDIV_DIV1;
+    oscinitstruct.PLL.PLLState    = RCC_PLL_ON;
+    oscinitstruct.PLL.PLLSource   = RCC_PLLSOURCE_HSE;
+    oscinitstruct.PLL.PLLMUL      = RCC_PLL_MUL9;
+    if (HAL_RCC_OscConfig(&oscinitstruct)!= HAL_OK)
+    {
+        /* Initialization Error */
+        while(1);
+    }
+
+    clkinitstruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+    clkinitstruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    clkinitstruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    clkinitstruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    clkinitstruct.APB1CLKDivider = RCC_HCLK_DIV2;
+    if (HAL_RCC_ClockConfig(&clkinitstruct, FLASH_LATENCY_2)!= HAL_OK)
+    {
+        /* Initialization Error */
+        while(1);
+    }
 }
 
-void USART2_Init(void)
+static void USART1_Init(void)
+{
+    huart1.Instance = USART1;
+    huart1.Init.BaudRate = 115200;
+    huart1.Init.WordLength = UART_WORDLENGTH_8B;
+    huart1.Init.StopBits = UART_STOPBITS_1;
+    huart1.Init.Parity = UART_PARITY_NONE; //无奇偶校验位
+    huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart1.Init.Mode = UART_MODE_TX_RX;
+    huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+    HAL_UART_Init(&huart1);
+}
+
+static void USART2_Init(void)
 {
     huart2.Instance = USART2;
     huart2.Init.BaudRate = 115200;
@@ -95,39 +125,36 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     }
 }
 
-//printf 重定向
-#ifdef __GNUC__
-/* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
-   set to 'Yes') calls __io_putchar() */
-#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-#else
 
-#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-
-#endif
-PUTCHAR_PROTOTYPE
+void HAL_SystemInit(void)
 {
-    HAL_UART_Transmit(&huart2, (uint8_t*)&ch, 1, 100);
-    return ch;
+    HAL_Init();
+    SystemClockConfig();
+    USART2_Init();
+    USART1_Init();
 }
 
-//USART1 发送数据
-void UART_Transmit(uint8_t c)
+//获取系统滴答定时器计数值 单位ms
+uint32_t HAL_Millis(void)
+{
+    return HAL_GetTick();
+}
+
+//串口发送数据到模组
+void HAL_UartWrite(uint8_t c)
 {
     uint8_t data = c;
     HAL_UART_Transmit(&huart1, &data, 1, 100);
 }
 
-//USART1 接收数据,在中断里面调用
-static void UART_Receive(void)
-{
-    uint8_t c;
-    HAL_UART_Receive(&huart1, &c, 1, 100);
-    SerialPipeRxIrqBuf(c);
-}
 
-void USART1_IRQHandler(void)
+void HAL_Print(char *data, uint16_t len)
 {
-    UART_Receive();
+    int n;
+    uint8_t tmp = 0;
+    for(n=0; n<len; n++)
+    {
+        tmp = data[n];
+        HAL_UART_Transmit(&huart2, &tmp, 1, 100);
+    }
 }
-

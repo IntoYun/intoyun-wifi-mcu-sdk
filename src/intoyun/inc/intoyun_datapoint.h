@@ -26,13 +26,9 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
-
-
 #include "intoyun_protocol.h"
 
-#define DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL     10
-
-#define PROPERTIES_MAX 50
+#define DPID_DEFAULT_BOOL_GETALLDATAPOINT         0x7F81        //默认数据点  获取所有数据点
 
 // transmit
 typedef enum {
@@ -86,9 +82,6 @@ typedef struct {
     uint16_t dpID;
     data_type_t dataType;
     dp_permission_t permission;
-    dp_policy_t policy;
-    long lapse;
-    long runtime;
     bool change; //数据是否改变 true 数据有变化
     read_datapoint_result_t readFlag;
     number_property_t numberProperty;
@@ -108,22 +101,35 @@ typedef struct {
 }datapoint_control_t;
 
 
-typedef void (*event_handler_t)(event_type_t event, uint8_t *data, uint32_t len);
+typedef void (*event_handler_t)(uint8_t eventType, uint8_t param, uint8_t *data, uint32_t len);
 
+//System API
 void intoyunInit(void);
-void intoyunSetEventCallback(event_handler_t handler);
-void intoyunSetMode(mode_type_t mode, uint32_t timeout);
 void intoyunLoop(void);
+void intoyunSetEventCallback(event_handler_t handler);
+bool intoyunSetMode(mode_type_t mode, uint32_t timeout);
+mode_type_t intoyunGetMode(void);
 void intoyunDatapointControl(dp_transmit_mode_t mode, uint32_t lapse);
-void intoyunSendProductInfo(char *productId, char *hardVer, char *softVer);
+void intoyunSetDevice(char *productId, char *hardVer, char *softVer);
+void intoyunGetDevice(char *productId, char *hardVer, char *softVer);
+void intoyunGetInfo(char *moduleVersion, char *moduleType, char *deviceId, uint8_t *at_mode);
+bool intoyunExecuteRestart(void);
+bool intoyunExecuteRestore(void);
+void intoyunPutPipe(uint8_t value);
+bool intoyunGetNetTime(char *net_time, char *timestamp);
+uint8_t intoyunGetStatus(char *ssid, uint32_t *ipAddr, int *rssi);
 
-int intoyunDiscoverProperty(const uint16_t dpID);
+void intoyunConnect(void);
+bool intoyunConnected(void);
+void intoyunDisconnect(void);
+bool intoyunDisconnected(void);
 
-void intoyunDefineDatapointBool(const uint16_t dpID, dp_permission_t permission, const bool value, dp_policy_t policy, const int lapse);
-void intoyunDefineDatapointNumber(const uint16_t dpID, dp_permission_t permission, const double minValue, const double maxValue, const int resolution, const double value, dp_policy_t policy, const int lapse);
-void intoyunDefineDatapointEnum(const uint16_t dpID, dp_permission_t permission, const int value, dp_policy_t policy, const int lapse);
-void intoyunDefineDatapointString(const uint16_t dpID, dp_permission_t permission, const char *value, dp_policy_t policy, const int lapse);
-void intoyunDefineDatapointBinary(const uint16_t dpID, dp_permission_t permission, const uint8_t *value, const uint16_t len, dp_policy_t policy, const int lapse);
+//datapoint API
+void intoyunDefineDatapointBool(const uint16_t dpID, dp_permission_t permission, const bool value);
+void intoyunDefineDatapointNumber(const uint16_t dpID, dp_permission_t permission, const double minValue, const double maxValue, const int resolution, const double value);
+void intoyunDefineDatapointEnum(const uint16_t dpID, dp_permission_t permission, const int value);
+void intoyunDefineDatapointString(const uint16_t dpID, dp_permission_t permission, const char *value);
+void intoyunDefineDatapointBinary(const uint16_t dpID, dp_permission_t permission, const uint8_t *value, const uint16_t len);
 
 read_datapoint_result_t intoyunReadDatapointBool(const uint16_t dpID, bool *value);
 read_datapoint_result_t intoyunReadDatapointNumberInt32(const uint16_t dpID, int32_t *value);
@@ -147,17 +153,14 @@ void intoyunSendDatapointString(const uint16_t dpID, const char *value);
 void intoyunSendDatapointBinary(const uint16_t dpID, const uint8_t *value, uint16_t len);
 
 void intoyunParseReceiveDatapoints(const uint8_t *payload, uint32_t len, uint8_t *customData);
-static uint16_t intoyunFormDataPointBinary(int property_index, uint8_t *buffer);
-static uint16_t intoyunFormSingleDatapoint(int property_index, uint8_t *buffer, uint16_t len);
-static uint16_t intoyunFormAllDatapoint(uint8_t *buffer, uint16_t len, bool dpForm);
-void intoyunSendSingleDatapoint(const uint16_t dpID);
-void intoyunSendDatapointAll(bool dpForm);
+static void intoyunSendDatapointAll(bool dpForm);
+static void intoyunSendSingleDatapoint(const uint16_t dpID);
 void intoyunSendCustomData(const uint8_t *buffer, uint16_t len);
-void intoyunTransmitData(const uint8_t *buffer, uint16_t len);
-
 void intoyunSendAllDatapointManual(void);
 void intoyunSendDatapointAutomatic(void);
 
 extern event_handler_t eventHandler;
+extern bool cloudConnected;
+extern bool moduleConnectNetwork;
 
 #endif /*_DATAPOINT_H*/

@@ -18,7 +18,10 @@ License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "intoyun_datapoint.h"
-#include "time.h"
+#include "intoyun_interface.h"
+#include "intoyun_config.h"
+#include "intoyun_log.h"
+#include "intoyun_md5.h"
 
 /* #define INTOYUN_DEBUG */
 
@@ -27,49 +30,254 @@ property_conf *properties[PROPERTIES_MAX];
 
 int properties_count = 0;
 event_handler_t eventHandler = NULL;
+bool cloudConnected = false;
+bool moduleConnectNetwork = false;
+static uint8_t at_mode = 0;
+static bool deviceRegisterEn = true;
+static uint32_t deviceRegisterID = 0;
+static uint8_t deviceRegisterCnt = 0;
 
 //初始化设置参数 自动发送 发送间隔时间  发送运行时间
 volatile datapoint_control_t g_datapoint_control = {DP_TRANSMIT_MODE_AUTOMATIC, DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL, 0};
 
-
-void intoyunSendProductInfo(char *productId, char *hardVer, char *softVer)
-{
-    ProtocolSetDeviceInfo(productId,hardVer,softVer);
-}
-
 void intoyunInit(void)
 {
+    device_info_t info;
+    HAL_SystemInit();
     ProtocolParserInit();
-}
+    delay(5);
+    intoyunDefineDatapointBool(DPID_DEFAULT_BOOL_GETALLDATAPOINT, DP_PERMISSION_UP_DOWN, false);     //get all datapoint
 
-void intoyunSetEventCallback(event_handler_t handler)
-{
-    if(handler != NULL)
-    {
-        eventHandler = handler;
+    if(!ProtocolQueryInfo(&info)){
+        return;
     }
+    at_mode = info.at_mode;
+    deviceRegisterID = timerGetId();
+    log_v("at_mode=%d\r\n",at_mode);
 }
 
-void intoyunSetMode(mode_type_t mode, uint32_t timeout)
+static void intoyunDeviceRegister(void)
 {
-    ProtocolSetWorkMode(mode,timeout);
+    if(at_mode != 0){ //已注册
+        return;
+    }
+
+    network_time_t networkTime;
+    if(moduleConnectNetwork){ //已经联网 可以注册
+        if(deviceRegisterEn){
+            if(timerIsEnd(deviceRegisterID,3000)){
+                log_v("start device register\r\n");
+                deviceRegisterID = timerGetId();
+                if(++deviceRegisterCnt >= 3){
+                    log_v("stop device register\r\n");
+                    deviceRegisterEn = false;
+                }
+
+                if(!ProtocolQueryNetTime(&networkTime)){
+                    log_v("get networkTime fail\r\n");
+                    return;
+                }
+                log_v("timestamp=%s\r\n",networkTime.timestamp);
+                char tmp[64] = {0};
+                char signature[33] = {0};
+                sprintf(tmp,"%s%s",networkTime.timestamp,PRODUCT_SECRET);
+                log_v("tmp=%s\r\n",tmp);
+                md5_output((uint8_t *)tmp,strlen(tmp),signature);
+                log_v("signature=%s\r\n",signature);
+                if(ProtocolSetupRegister(PRODUCT_ID,networkTime.timestamp,signature) == 1){
+                    at_mode = 1;
+                    log_v("device register success\r\n");
+                    return;
+                }
+            }
+        }
+    }
 }
 
 void intoyunLoop(void)
 {
     ProtocolModuleActiveSendHandle();
-    intoyunSendDatapointAutomatic();
+    if(intoyunConnected()){
+        intoyunSendDatapointAutomatic();
+    }
+    intoyunDeviceRegister();
 }
 
-void intoyunSetDataAutoSend(uint32_t time)
+void intoyunSetEventCallback(event_handler_t handler)
 {
-    g_datapoint_control.datapoint_transmit_mode = DP_TRANSMIT_MODE_AUTOMATIC;
-    if(time < DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL)
-    {
-        g_datapoint_control.datapoint_transmit_lapse = DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL;
+    if(handler != NULL){
+        eventHandler = handler;
+    }
+}
+
+bool intoyunSetMode(mode_type_t mode, uint32_t timeout)
+{
+    return ProtocolSetupMode((uint8_t)mode,timeout);
+}
+
+mode_type_t intoyunGetMode(void)
+{
+    return (mode_type_t)ProtocolQueryMode();
+}
+
+
+void intoyunSetDevice(char *productId, char *hardVer, char *softVer)
+{
+    ProtocolSetupDevice(productId,hardVer,softVer);
+}
+
+void intoyunGetDevice(char *productId, char *hardVer, char *softVer)
+{
+    device_info_t info;
+    if(!ProtocolQueryDevice(&info)){
+        log_v("query device command fail\r\n");
         return;
     }
-    g_datapoint_control.datapoint_transmit_lapse = time;
+
+    log_v("productId = %s\r\n",info.product_id);
+    log_v("hardVer = %s\r\n",info.hardware_version);
+    log_v("softVer = %s\r\n",info.software_version);
+
+    strncpy(productId,info.product_id,sizeof(info.product_id));
+    strncpy(hardVer,info.hardware_version,sizeof(info.hardware_version));
+    strncpy(softVer,info.software_version,sizeof(info.software_version));
+}
+
+void intoyunGetInfo(char *moduleVersion, char *moduleType, char *deviceId, uint8_t *at_mode)
+{
+    device_info_t info;
+    if(!ProtocolQueryInfo(&info)){
+        return;
+    }
+
+    log_v("moduleVer = %s\r\n",info.module_version);
+    log_v("moduleType = %s\r\n",info.module_type);
+    log_v("deviceId = %s\r\n",info.device_id);
+    log_v("atmode = %d\r\n",info.at_mode);
+
+    strncpy(moduleVersion,info.module_version,sizeof(info.module_version));
+    strncpy(moduleType,info.module_type,sizeof(info.module_type));
+    strncpy(deviceId,info.device_id,sizeof(info.device_id));
+    *at_mode = info.at_mode;
+}
+
+bool intoyunExecuteRestart(void)
+{
+    return ProtocolExecuteRestart();
+}
+
+bool intoyunExecuteRestore(void)
+{
+    return ProtocolExecuteRestore();
+}
+
+void intoyunPutPipe(uint8_t value)
+{
+    ProtocolPutPipe(value);//将接收到的数据放入缓冲区
+}
+
+bool intoyunGetNetTime(char *net_time, char *timestamp)
+{
+    network_time_t netTime;
+    if(!ProtocolQueryNetTime(&netTime)){
+        return false;
+    }
+    if(netTime.status == 1){
+        strncpy(net_time,netTime.net_time,sizeof(netTime.net_time));
+        strncpy(timestamp,netTime.timestamp,sizeof(netTime.timestamp));
+        return true;
+    }
+    return false;
+}
+
+uint8_t intoyunGetStatus(char *ssid, uint32_t *ipAddr, int *rssi)
+{
+    module_status_t moduleStatus;
+    if(!ProtocolQueryStatus(&moduleStatus)){
+        return 0;
+    }
+
+    if(moduleStatus.module_status != 1){
+        log_v("ssid=%s\r\n",moduleStatus.wifi.ssid);
+        log_v("ipAddr=%d\r\n",moduleStatus.wifi.ipAddr);
+        log_v("rssi=%d\r\n",moduleStatus.wifi.rssi);
+        strncpy(ssid,moduleStatus.wifi.ssid,sizeof(moduleStatus.wifi.ssid));
+        *ipAddr = moduleStatus.wifi.ipAddr;
+        *rssi = moduleStatus.wifi.rssi;
+    }
+    return moduleStatus.module_status;
+}
+
+void intoyunConnect(void)
+{
+    ProtocolSetupJoin(2);
+}
+
+bool intoyunConnected(void)
+{
+    if(cloudConnected){ //已连接平台
+        return true;
+    }
+    return false;
+}
+
+void intoyunDisconnect(void)
+{
+    ProtocolSetupJoin(1);
+}
+
+bool intoyunDisconnected(void)
+{
+    if(!cloudConnected){ //与平台断开
+        return true;
+    }
+    return false;
+}
+
+void intoyunDatapointControl(dp_transmit_mode_t mode, uint32_t lapse)
+{
+    g_datapoint_control.datapoint_transmit_mode = mode;
+    if(DP_TRANSMIT_MODE_AUTOMATIC == g_datapoint_control.datapoint_transmit_mode){
+        if(lapse < DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL){
+            g_datapoint_control.datapoint_transmit_lapse = DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL;
+        }else{
+            g_datapoint_control.datapoint_transmit_lapse = lapse;
+        }
+    }else{
+        g_datapoint_control.datapoint_transmit_lapse = 0;
+        g_datapoint_control.runtime = 0;
+    }
+}
+
+//小数点
+static double _pow(double base, int exponent)
+{
+    double result = 1.0;
+    int i = 0;
+
+    for (i = 0; i < exponent; i++) {
+        result *= base;
+    }
+    return result;
+}
+
+//剔除默认数据点，可上送数据点的个数
+static uint8_t intoyunGetPropertyPermissionUpCount(void)
+{
+    uint8_t count = 0;
+
+    for (int i = 0; i < properties_count; i++) {
+        //系统默认dpID  不上传
+        if (properties[i]->dpID > 0x3F00) {
+            continue;
+        }
+
+        //允许上送
+        if((DP_PERMISSION_UP_ONLY == properties[i]->permission) || (DP_PERMISSION_UP_DOWN == properties[i]->permission)) {
+            count++;
+        }
+    }
+    return count;
 }
 
 static int intoyunDiscoverProperty(const uint16_t dpID)
@@ -86,10 +294,8 @@ static int intoyunDiscoverProperty(const uint16_t dpID)
 
 static bool intoyunPropertyChanged(void)
 {
-    for (int i = 0; i < properties_count; i++)
-    {
-        if (properties[i]->change)
-        {
+    for (int i = 0; i < properties_count; i++){
+        if (properties[i]->change){
             return true;
         }
     }
@@ -103,105 +309,62 @@ static uint8_t intoyunGetPropertyCount(void)
 
 static void intoyunPropertyChangeClear(void)
 {
-    for (int i = 0; i < properties_count; i++)
-    {
-        if (properties[i]->change)
-        {
+    for (int i = 0; i < properties_count; i++){
+        if (properties[i]->change){
             properties[i]->change = false;
         }
     }
 }
 
 
-dp_transmit_mode_t intoyunGetDatapointTransmitMode(void)
+static dp_transmit_mode_t intoyunGetDatapointTransmitMode(void)
 {
     return g_datapoint_control.datapoint_transmit_mode;
 }
 
-void intoyunDatapointControl(dp_transmit_mode_t mode, uint32_t lapse)
-{
-    g_datapoint_control.datapoint_transmit_mode = mode;
-    /* if(DP_TRANSMIT_MODE_AUTOMATIC == g_datapoint_control.datapoint_transmit_mode) */
-    {
-        if(lapse < DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL)
-        {
-            g_datapoint_control.datapoint_transmit_lapse = DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL;
-        }
-        else
-        {
-            g_datapoint_control.datapoint_transmit_lapse = lapse;
-        }
-    }
-}
-
-static void intoyunDatapointValueInit(uint16_t count,uint16_t dpID,data_type_t dataType,dp_permission_t permission, dp_policy_t policy,int lapse)
+static void intoyunDatapointValueInit(uint16_t count,uint16_t dpID,data_type_t dataType,dp_permission_t permission)
 {
     properties[count]=(property_conf*)malloc(sizeof(property_conf));
 
     properties[count]->dpID       = dpID;
     properties[count]->dataType   = dataType;
     properties[count]->permission = permission;
-    properties[count]->policy     = policy;
-    properties[count]->lapse      = lapse;
-    properties[count]->runtime    = 0;
+    properties[count]->change     = false;
     properties[count]->readFlag   = RESULT_DATAPOINT_OLD;
 }
 
-void intoyunDefineDatapointBool(const uint16_t dpID, dp_permission_t permission, const bool value, dp_policy_t policy, const int lapse)
+void intoyunDefineDatapointBool(const uint16_t dpID, dp_permission_t permission, const bool value)
 {
-    int lapseTemp = lapse;
-
-    if (-1 == intoyunDiscoverProperty(dpID))
-    {
-        if(DP_POLICY_NONE == policy)
-        {
-            lapseTemp = 0;
-        }
-
-        intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_BOOL,permission,policy,lapseTemp*1000);
+    if (-1 == intoyunDiscoverProperty(dpID)){
+        intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_BOOL,permission);
         properties[properties_count]->boolValue=value;
 
         #ifdef INTOYUN_DEBUG
-        printf("bool type datapoint\r\n");
-        printf("%d\r\n",properties_count);
-        printf("%d\r\n",properties[properties_count]->dpID);
-        printf("%d\r\n",properties[properties_count]->dataType);
-        printf("%d\r\n",properties[properties_count]->permission);
-        printf("%d\r\n",properties[properties_count]->policy);
+        log_v("bool type datapoint\r\n");
+        log_v("%d\r\n",properties_count);
+        log_v("%d\r\n",properties[properties_count]->dpID);
+        log_v("%d\r\n",properties[properties_count]->dataType);
+        log_v("%d\r\n",properties[properties_count]->permission);
         #endif
         properties_count++; // count the number of properties
     }
 }
 
-void intoyunDefineDatapointNumber(const uint16_t dpID, dp_permission_t permission, const double minValue, const double maxValue, const int resolution, const double value, dp_policy_t policy, const int lapse)
+void intoyunDefineDatapointNumber(const uint16_t dpID, dp_permission_t permission, const double minValue, const double maxValue, const int resolution, const double value)
 {
-    int lapseTemp = lapse;
-
-    if (-1 == intoyunDiscoverProperty(dpID))
-    {
-        if(DP_POLICY_NONE == policy)
-        {
-            lapseTemp = 0;
-        }
-
-        intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_NUM,permission,policy,lapseTemp*1000);
+    if (-1 == intoyunDiscoverProperty(dpID)){
+        intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_NUM,permission);
 
         double defaultValue = value;
-        if(defaultValue < minValue)
-        {
+        if(defaultValue < minValue){
             defaultValue = minValue;
-        }
-        else if(defaultValue > maxValue)
-        {
+        }else if(defaultValue > maxValue){
             defaultValue = maxValue;
         }
 
-        if(resolution == 0)
-        {
+        if(resolution == 0){
             properties[properties_count]->numberIntValue=value;
-        }
-        else
-        {
+        }else{
             properties[properties_count]->numberDoubleValue=value;
         }
         properties[properties_count]->numberProperty.minValue = minValue;
@@ -209,117 +372,87 @@ void intoyunDefineDatapointNumber(const uint16_t dpID, dp_permission_t permissio
         properties[properties_count]->numberProperty.resolution = resolution;
 
         #ifdef INTOYUN_DEBUG
-        printf("number type datapoint\r\n");
-        printf("%d\r\n",properties_count);
-        printf("%d\r\n",properties[properties_count]->dpID);
-        printf("%d\r\n",properties[properties_count]->dataType);
-        printf("%d\r\n",properties[properties_count]->permission);
-        printf("%d\r\n",properties[properties_count]->policy);
-        printf("%f\r\n",properties[properties_count]->numberProperty.minValue);
-        printf("%f\r\n",properties[properties_count]->numberProperty.maxValue);
-        printf("%d\r\n",properties[properties_count]->numberProperty.resolution);
+        log_v("number type datapoint\r\n");
+        log_v("%d\r\n",properties_count);
+        log_v("%d\r\n",properties[properties_count]->dpID);
+        log_v("%d\r\n",properties[properties_count]->dataType);
+        log_v("%d\r\n",properties[properties_count]->permission);
+        log_v("%f\r\n",properties[properties_count]->numberProperty.minValue);
+        log_v("%f\r\n",properties[properties_count]->numberProperty.maxValue);
+        log_v("%d\r\n",properties[properties_count]->numberProperty.resolution);
 
         if(resolution == 0)
-            printf("%d\r\n",properties[properties_count]->numberIntValue);
+            log_v("%d\r\n",properties[properties_count]->numberIntValue);
         else
-            printf("%f\r\n",properties[properties_count]->numberDoubleValue);
+            log_v("%f\r\n",properties[properties_count]->numberDoubleValue);
 
         #endif
         properties_count++; // count the number of properties
     }
 }
 
-void intoyunDefineDatapointEnum(const uint16_t dpID, dp_permission_t permission, const int value, dp_policy_t policy, const int lapse)
+void intoyunDefineDatapointEnum(const uint16_t dpID, dp_permission_t permission, const int value)
 {
-    int lapseTemp;
-
-    if (-1 == intoyunDiscoverProperty(dpID))
-    {
-        if(DP_POLICY_NONE == policy)
-        {
-            lapseTemp = 0;
-        }
-
+    if (-1 == intoyunDiscoverProperty(dpID)){
         int defaultValue = value;
-        if(defaultValue < 0)
-        {
+        if(defaultValue < 0){
             defaultValue = 0;
         }
 
-        intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_ENUM,permission,policy,lapseTemp*1000);
+        intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_ENUM,permission);
         properties[properties_count]->enumValue = defaultValue;
         #ifdef INTOYUN_DEBUG
-        printf("enum type datapoint\r\n");
-        printf("%d\r\n",properties_count);
-        printf("%d\r\n",properties[properties_count]->dpID);
-        printf("%d\r\n",properties[properties_count]->dataType);
-        printf("%d\r\n",properties[properties_count]->permission);
-        printf("%d\r\n",properties[properties_count]->policy);
-        printf("%d\r\n",properties[properties_count]->enumValue);
+        log_v("enum type datapoint\r\n");
+        log_v("%d\r\n",properties_count);
+        log_v("%d\r\n",properties[properties_count]->dpID);
+        log_v("%d\r\n",properties[properties_count]->dataType);
+        log_v("%d\r\n",properties[properties_count]->permission);
+        log_v("%d\r\n",properties[properties_count]->enumValue);
         #endif
         properties_count++; // count the number of properties
     }
 }
 
-void intoyunDefineDatapointString(const uint16_t dpID, dp_permission_t permission, const char *value, dp_policy_t policy, const int lapse)
+void intoyunDefineDatapointString(const uint16_t dpID, dp_permission_t permission, const char *value)
 {
-    int lapseTemp;
-
-    if (-1 == intoyunDiscoverProperty(dpID))
-    {
-        if(DP_POLICY_NONE == policy)
-        {
-            lapseTemp = 0;
-        }
-
-        intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_STRING,permission,policy,lapseTemp*1000);
+    if (-1 == intoyunDiscoverProperty(dpID)){
+        intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_STRING,permission);
         properties[properties_count]->stringValue = (char *)malloc(strlen(value)+1);
         strncpy(properties[properties_count]->stringValue,value,strlen(value)+1);
 
         #ifdef INTOYUN_DEBUG
-        printf("string type datapoint\r\n");
-        printf("%d\r\n",properties_count);
-        printf("%d\r\n",properties[properties_count]->dpID);
-        printf("%d\r\n",properties[properties_count]->dataType);
-        printf("%d\r\n",properties[properties_count]->permission);
-        printf("%d\r\n",properties[properties_count]->policy);
-        printf("%s\r\n",properties[properties_count]->stringValue);
+        log_v("string type datapoint\r\n");
+        log_v("%d\r\n",properties_count);
+        log_v("%d\r\n",properties[properties_count]->dpID);
+        log_v("%d\r\n",properties[properties_count]->dataType);
+        log_v("%d\r\n",properties[properties_count]->permission);
+        log_v("%s\r\n",properties[properties_count]->stringValue);
         #endif
         properties_count++; // count the number of properties
     }
 }
 
-void intoyunDefineDatapointBinary(const uint16_t dpID, dp_permission_t permission, const uint8_t *value, const uint16_t len, dp_policy_t policy, const int lapse)
+void intoyunDefineDatapointBinary(const uint16_t dpID, dp_permission_t permission, const uint8_t *value, const uint16_t len)
 {
-    int lapseTemp;
-
-    if (-1 == intoyunDiscoverProperty(dpID))
-    {
-        if(DP_POLICY_NONE == policy)
-        {
-            lapseTemp = 0;
-        }
-
-        intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_BINARY,permission,policy,lapseTemp*1000);
+    if (-1 == intoyunDiscoverProperty(dpID)){
+        intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_BINARY,permission);
         properties[properties_count]->binaryValue.value = (uint8_t *)malloc(len);
-        for(uint8_t i=0;i<len;i++)
-        {
+        for(uint8_t i=0;i<len;i++){
             properties[properties_count]->binaryValue.value[i] = value[i];
         }
         properties[properties_count]->binaryValue.len = (uint16_t)len;
 
         #ifdef INTOYUN_DEBUG
-        printf("binary type datapoint\r\n");
-        printf("%d\r\n",properties_count);
-        printf("%d\r\n",properties[properties_count]->dpID);
-        printf("%d\r\n",properties[properties_count]->dataType);
-        printf("%d\r\n",properties[properties_count]->permission);
-        printf("%d\r\n",properties[properties_count]->policy);
-        printf("%d\r\n",properties[properties_count]->binaryValue.len);
+        log_v("binary type datapoint\r\n");
+        log_v("%d\r\n",properties_count);
+        log_v("%d\r\n",properties[properties_count]->dpID);
+        log_v("%d\r\n",properties[properties_count]->dataType);
+        log_v("%d\r\n",properties[properties_count]->permission);
+        log_v("%d\r\n",properties[properties_count]->binaryValue.len);
 
         for(uint8_t i=0;i<len;i++)
         {
-            printf("data=0x%x\r\n",properties[properties_count]->binaryValue.value[i]);
+            log_v("data=0x%x\r\n",properties[properties_count]->binaryValue.value[i]);
         }
         #endif
         properties_count++; // count the number of properties
@@ -329,8 +462,7 @@ void intoyunDefineDatapointBinary(const uint16_t dpID, dp_permission_t permissio
 read_datapoint_result_t intoyunReadDatapointBool(const uint16_t dpID, bool *value)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1)
-    {
+    if (index == -1){
         return RESULT_DATAPOINT_NONE;
     }
 
@@ -343,8 +475,7 @@ read_datapoint_result_t intoyunReadDatapointBool(const uint16_t dpID, bool *valu
 read_datapoint_result_t intoyunReadDatapointNumberInt32(const uint16_t dpID, int32_t *value)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1)
-    {
+    if (index == -1){
         return RESULT_DATAPOINT_NONE;
     }
 
@@ -357,8 +488,7 @@ read_datapoint_result_t intoyunReadDatapointNumberInt32(const uint16_t dpID, int
 read_datapoint_result_t intoyunReadDatapointNumberDouble(const uint16_t dpID, double *value)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1)
-    {
+    if (index == -1){
         return RESULT_DATAPOINT_NONE;
     }
 
@@ -371,8 +501,7 @@ read_datapoint_result_t intoyunReadDatapointNumberDouble(const uint16_t dpID, do
 read_datapoint_result_t intoyunReadDatapointEnum(const uint16_t dpID, int *value)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1)
-    {
+    if (index == -1){
         return RESULT_DATAPOINT_NONE;
     }
 
@@ -386,8 +515,7 @@ read_datapoint_result_t intoyunReadDatapointEnum(const uint16_t dpID, int *value
 read_datapoint_result_t intoyunReadDatapointString(const uint16_t dpID, char *value)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1)
-    {
+    if (index == -1){
         return RESULT_DATAPOINT_NONE;
     }
 
@@ -403,8 +531,7 @@ read_datapoint_result_t intoyunReadDatapointString(const uint16_t dpID, char *va
 read_datapoint_result_t intoyunReadDatapointBinary(const uint16_t dpID, uint8_t *value, uint16_t len)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1)
-    {
+    if (index == -1){
         return RESULT_DATAPOINT_NONE;
     }
 
@@ -421,99 +548,72 @@ read_datapoint_result_t intoyunReadDatapointBinary(const uint16_t dpID, uint8_t 
 
 // dpCtrlType   0: 平台控制写数据   1：用户写数据
 
-void intoyunPlatformWriteDatapointBool(const uint16_t dpID, bool value, bool dpCtrlType)
+static void intoyunPlatformWriteDatapointBool(const uint16_t dpID, bool value, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1)
-    {
+    if(index == -1){
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_BOOL)
-    {
+    if(properties[index]->dataType != DATA_TYPE_BOOL){
         return;
-    }
-    else
-    {
-        if(properties[index]->boolValue != value)
-        {
+    }else{
+        if(properties[index]->boolValue != value){
             properties[index]->change = true;
-            if(dpCtrlType)
-            { //用户操作
+            if(dpCtrlType){ //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
             properties[index]->boolValue = value;
-        }
-        else
-        {
-            properties[index]->change = false;
-            if(dpCtrlType)
-            { //用户操作
+        }else{
+            if(dpCtrlType){ //用户操作
+                properties[index]->change = false;
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
+                properties[index]->change = true;
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
-
     }
 }
+
 void intoyunWriteDatapointBool(const uint16_t dpID, bool value)
 {
     intoyunPlatformWriteDatapointBool(dpID,value,true);
 }
 
-void intoyunPlatformWriteDatapointNumberInt32(const uint16_t dpID, int32_t value, bool dpCtrlType)
+static void intoyunPlatformWriteDatapointNumberInt32(const uint16_t dpID, int32_t value, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1)
-    {
+    if(index == -1){
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_NUM || properties[index]->numberProperty.resolution != 0)
-    {
+    if(properties[index]->dataType != DATA_TYPE_NUM || properties[index]->numberProperty.resolution != 0){
         return;
-    }
-    else
-    {
+    }else{
         int32_t tmp = value;
-        if(tmp < properties[index]->numberProperty.minValue)
-        {
+        if(tmp < properties[index]->numberProperty.minValue){
             tmp = properties[index]->numberProperty.minValue;
-        }
-        else if(tmp > properties[index]->numberProperty.maxValue)
-        {
+        }else if(tmp > properties[index]->numberProperty.maxValue){
             tmp = properties[index]->numberProperty.maxValue;
         }
 
-        if(properties[index]->numberIntValue != value)
-        {
+        if(properties[index]->numberIntValue != value){
             properties[index]->change = true;
-            if(dpCtrlType)
-            { //用户操作
+            if(dpCtrlType){ //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
             properties[index]->numberIntValue = tmp;
-        }
-        else
-        {
-            properties[index]->change = false;
-            if(dpCtrlType)
-            { //用户操作
+        }else{
+            if(dpCtrlType){ //用户操作
+                properties[index]->change = false;
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
+                properties[index]->change = true;
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
@@ -525,57 +625,42 @@ void intoyunWriteDatapointNumberInt32(const uint16_t dpID, int32_t value)
     intoyunPlatformWriteDatapointNumberInt32(dpID,value,true);
 }
 
-void intoyunPlatformWriteDatapointNumberDouble(const uint16_t dpID, double value, bool dpCtrlType)
+static void intoyunPlatformWriteDatapointNumberDouble(const uint16_t dpID, double value, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1)
-    {
+    if(index == -1){
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_NUM || properties[index]->numberProperty.resolution == 0)
-    {
+    if(properties[index]->dataType != DATA_TYPE_NUM || properties[index]->numberProperty.resolution == 0){
         return;
-    }
-    else
-    {
+    }else{
         int32_t tmp;
         double d = value;
-        if(d < properties[index]->numberProperty.minValue)
-        {
+        if(d < properties[index]->numberProperty.minValue){
             d = properties[index]->numberProperty.minValue;
-        }
-        else if(d > properties[index]->numberProperty.maxValue)
-        {
+        }else if(d > properties[index]->numberProperty.maxValue){
             d = properties[index]->numberProperty.maxValue;
         }
 
         //保证小数点位数
-        tmp = (int32_t)(d * pow(10, properties[index]->numberProperty.resolution));
+        tmp = (int32_t)(d * _pow(10, properties[index]->numberProperty.resolution));
 
-        if(properties[index]->numberDoubleValue != d)
-        {
+        if(properties[index]->numberDoubleValue != d){
             properties[index]->change = true;
-            if(dpCtrlType)
-            { //用户操作
+            if(dpCtrlType){ //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
 
-            properties[index]->numberDoubleValue = tmp/(double)pow(10, properties[index]->numberProperty.resolution);
-        }
-        else
-        {
-            properties[index]->change = false;
-            if(dpCtrlType)
-            { //用户操作
+            properties[index]->numberDoubleValue = tmp/(double)_pow(10, properties[index]->numberProperty.resolution);
+        }else{
+            if(dpCtrlType){ //用户操作
+                properties[index]->change = false;
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
+                properties[index]->change = true;
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
@@ -587,42 +672,30 @@ void intoyunWriteDatapointNumberDouble(const uint16_t dpID, double value)
     intoyunPlatformWriteDatapointNumberDouble(dpID,value,true);
 }
 
-void intoyunPlatformWriteDatapointEnum(const uint16_t dpID, int value, bool dpCtrlType)
+static void intoyunPlatformWriteDatapointEnum(const uint16_t dpID, int value, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1)
-    {
+    if(index == -1){
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_ENUM)
-    {
+    if(properties[index]->dataType != DATA_TYPE_ENUM){
         return;
-    }
-    else
-    {
-        if(properties[index]->enumValue != value)
-        {
+    }else{
+        if(properties[index]->enumValue != value){
             properties[index]->change = true;
-            if(dpCtrlType)
-            { //用户操作
+            if(dpCtrlType){ //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
             properties[index]->enumValue = value;
-        }
-        else
-        {
-            properties[index]->change = false;
-            if(dpCtrlType)
-            { //用户操作
+        }else{
+            if(dpCtrlType){ //用户操作
+                properties[index]->change = false;
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
+                properties[index]->change = true;
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
@@ -634,43 +707,39 @@ void intoyunWriteDatapointEnum(const uint16_t dpID, int value)
     intoyunPlatformWriteDatapointEnum(dpID,value,true);
 }
 
-void intoyunPlatformWriteDatapointString(const uint16_t dpID, const char *value, bool dpCtrlType)
+static void intoyunPlatformWriteDatapointString(const uint16_t dpID, const char *value, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1)
-    {
+    if(index == -1){
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_STRING)
-    {
+    if(properties[index]->dataType != DATA_TYPE_STRING){
         return;
-    }
-    else
-    {
-        if(strcmp(properties[index]->stringValue,value) != 0)
-        {
+    }else{
+        if(strcmp(properties[index]->stringValue,value) != 0){
+            log_v("string changed\r\n");
+            log_v("old string=%s\r\n",properties[index]->stringValue);
+            log_v("value=%s\r\n",value);
             properties[index]->change = true;
-            if(dpCtrlType)
-            { //用户操作
+            if(dpCtrlType){ //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
+            }
+            if(properties[index]->stringValue != NULL){
+                free(properties[index]->stringValue);
+                properties[index]->stringValue = NULL;
             }
             properties[index]->stringValue = (char *)malloc(strlen(value)+1);
             strncpy(properties[index]->stringValue,value,strlen(value)+1);
-        }
-        else
-        {
-            properties[index]->change = false;
-            if(dpCtrlType)
-            { //用户操作
+            log_v("new string=%s\r\n",properties[index]->stringValue);
+        }else{
+            if(dpCtrlType){ //用户操作
+                properties[index]->change = false;
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
+                properties[index]->change = true;
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
@@ -682,29 +751,21 @@ void intoyunWriteDatapointString(const uint16_t dpID, const char *value)
     intoyunPlatformWriteDatapointString(dpID,value,true);
 }
 
-void intoyunPlatformWriteDatapointBinary(const uint16_t dpID, const uint8_t *value, uint16_t len, bool dpCtrlType)
+static void intoyunPlatformWriteDatapointBinary(const uint16_t dpID, const uint8_t *value, uint16_t len, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1)
-    {
+    if(index == -1){
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_BINARY)
-    {
+    if(properties[index]->dataType != DATA_TYPE_BINARY){
         return;
-    }
-    else
-    {
-        if(memcmp(properties[index]->binaryValue.value,value,len) != 0)
-        {
+    }else{
+        if(memcmp(properties[index]->binaryValue.value,value,len) != 0){
             properties[index]->change = true;
-            if(dpCtrlType)
-            { //用户操作
+            if(dpCtrlType){ //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
 
@@ -715,16 +776,12 @@ void intoyunPlatformWriteDatapointBinary(const uint16_t dpID, const uint8_t *val
             }
             properties[index]->binaryValue.len = (uint16_t)len;
 
-        }
-        else
-        {
-            properties[index]->change = false;
-            if(dpCtrlType)
-            { //用户操作
+        }else{
+            if(dpCtrlType){ //用户操作
+                properties[index]->change = false;
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }
-            else
-            {
+            }else{
+                properties[index]->change = true;
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
@@ -740,8 +797,7 @@ void intoyunSendDatapointBool(const uint16_t dpID, bool value)
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1)
-    {
+    if (index == -1){
         return;
     }
 
@@ -750,19 +806,14 @@ void intoyunSendDatapointBool(const uint16_t dpID, bool value)
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
         return;
     }
-
     //只允许下发
-    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY)
-    {
+    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
         return;
     }
-
     //数值未发生变化
-    if (!properties[index]->change && properties[index]->policy == DP_POLICY_NONE)
-    {
+    if (!properties[index]->change){
         return;
     }
-
     intoyunSendSingleDatapoint(index);
 }
 
@@ -770,8 +821,7 @@ void intoyunSendDatapointNumberInt32(const uint16_t dpID, int32_t value)
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1)
-    {
+    if (index == -1){
         return;
     }
 
@@ -780,19 +830,14 @@ void intoyunSendDatapointNumberInt32(const uint16_t dpID, int32_t value)
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
         return;
     }
-
     //只允许下发
-    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY)
-    {
+    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
         return;
     }
-
     //数值未发生变化
-    if (!properties[index]->change && properties[index]->policy == DP_POLICY_NONE)
-    {
+    if (!properties[index]->change){
         return;
     }
-
     intoyunSendSingleDatapoint(index);
 }
 
@@ -800,8 +845,7 @@ void intoyunSendDatapointNumberDouble(const uint16_t dpID, double value)
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1)
-    {
+    if (index == -1){
         // not found, nothing to do
         return;
     }
@@ -811,19 +855,14 @@ void intoyunSendDatapointNumberDouble(const uint16_t dpID, double value)
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
         return;
     }
-
     //只允许下发
-    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY)
-    {
+    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
         return;
     }
-
     //数值未发生变化
-    if (!properties[index]->change && properties[index]->policy == DP_POLICY_NONE)
-    {
+    if (!properties[index]->change){
         return;
     }
-
     intoyunSendSingleDatapoint(index);
 }
 
@@ -831,8 +870,7 @@ void intoyunSendDatapointEnum(const uint16_t dpID, int value)
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1)
-    {
+    if (index == -1){
         // not found, nothing to do
         return;
     }
@@ -842,20 +880,14 @@ void intoyunSendDatapointEnum(const uint16_t dpID, int value)
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
         return;
     }
-
-
     //只允许下发
-    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY)
-    {
+    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
         return;
     }
-
     //数值未发生变化
-    if (!properties[index]->change && properties[index]->policy == DP_POLICY_NONE)
-    {
+    if (!properties[index]->change){
         return;
     }
-
     intoyunSendSingleDatapoint(index);
 }
 
@@ -863,8 +895,7 @@ void intoyunSendDatapointString(const uint16_t dpID, const char *value)
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1)
-    {
+    if (index == -1){
         // not found, nothing to do
         return;
     }
@@ -874,20 +905,14 @@ void intoyunSendDatapointString(const uint16_t dpID, const char *value)
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
         return;
     }
-
-
     //只允许下发
-    if (properties[index]->permission == DP_PERMISSION_DOWN_ONLY)
-    {
+    if (properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
         return;
     }
-
     //数值未发生变化
-    if (!properties[index]->change && properties[index]->policy == DP_POLICY_NONE)
-    {
+    if (!properties[index]->change){
         return;
     }
-
     intoyunSendSingleDatapoint(index);
 }
 
@@ -895,8 +920,7 @@ void intoyunSendDatapointBinary(const uint16_t dpID, const uint8_t *value, uint1
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1)
-    {
+    if (index == -1){
         // not found, nothing to do
         return;
     }
@@ -906,35 +930,22 @@ void intoyunSendDatapointBinary(const uint16_t dpID, const uint8_t *value, uint1
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
         return;
     }
-
-
     //只允许下发
-    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY)
-    {
+    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
         return;
     }
-
     //数值未发生变化
-    if (!properties[index]->change && properties[index]->policy == DP_POLICY_NONE)
-    {
+    if (!properties[index]->change){
         return;
     }
-
     intoyunSendSingleDatapoint(index);
 }
 
 void intoyunParseReceiveDatapoints(const uint8_t *payload, uint32_t len, uint8_t *customData)
 {
-    #ifdef INTOYUN_DEBUG
-    printf("receive data length = %d\r\n",len);
-    printf("receive data:\r\n");
-    for(uint16_t i = 0; i < len; i++)
-    {
-        printf("0x%x",payload[i]);
-        printf(" ");
-    }
-    printf("\r\n");
-    #endif
+    log_v("receive data length = %d\r\n",len);
+    log_v("receive data:\r\n");
+    log_v_dump((uint8_t *)payload,len);
 
     //dpid(1-2 bytes)+data type(1 byte)+data len(1-2 bytes)+data(n bytes)
     //大端表示，如果最高位是1，则表示两个字节，否则是一个字节
@@ -943,13 +954,10 @@ void intoyunParseReceiveDatapoints(const uint8_t *payload, uint32_t len, uint8_t
     uint8_t dataType;
     uint16_t dataLength=0;
 
-    if(payload[0] == CUSTOMER_DEFINE_DATA) //用户透传数据
-    {
+    if(payload[0] == CUSTOMER_DEFINE_DATA){ //用户透传数据
         (*customData) = CUSTOMER_DEFINE_DATA;
         return;
-    }
-    else
-    {
+    }else{
         (*customData) = INTOYUN_DATAPOINT_DATA;
     }
 
@@ -958,8 +966,7 @@ void intoyunParseReceiveDatapoints(const uint8_t *payload, uint32_t len, uint8_t
     while(index < len)
     {
         dpID = payload[index++] & 0xff;
-        if(dpID >= 0x80) //数据点有2个字节
-        {
+        if(dpID >= 0x80) {//数据点有2个字节
             dpID = dpID & 0x7f; //去掉最高位
             dpID = (dpID << 8) | payload[index++];
         }
@@ -972,8 +979,7 @@ void intoyunParseReceiveDatapoints(const uint8_t *payload, uint32_t len, uint8_t
             {
                 dataLength = payload[index++] & 0xff;
                 bool value = payload[index++];
-                if(intoyunDiscoverProperty(dpID) != -1)//数据点存在
-                {
+                if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
                     intoyunPlatformWriteDatapointBool(dpID,value,false);
                 }
             }
@@ -983,68 +989,50 @@ void intoyunParseReceiveDatapoints(const uint8_t *payload, uint32_t len, uint8_t
             {
                 dataLength = payload[index++] & 0xff;
                 int32_t value = payload[index++] & 0xff;
-                if(dataLength == 2)
-                {
+                if(dataLength == 2){
                     value = (value << 8) | payload[index++];
-                }
-                else if(dataLength == 3)
-                {
+                }else if(dataLength == 3){
                     value = (value << 8) | payload[index++];
                     value = (value << 8) | payload[index++];
-                }
-                else if(dataLength == 4)
-                {
+                }else if(dataLength == 4){
                     value = (value << 8) | payload[index++];
                     value = (value << 8) | payload[index++];
                     value = (value << 8) | payload[index++];
                 }
 
                 uint8_t id = intoyunDiscoverProperty(dpID);
-                if(properties[id]->numberProperty.resolution == 0) //此数据点为int
-                {
+                if(properties[id]->numberProperty.resolution == 0) {//此数据点为int
                     value = value + properties[id]->numberProperty.minValue;
 
-                    if(intoyunDiscoverProperty(dpID) != -1)//数据点存在
-                    {
+                    if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
                         intoyunPlatformWriteDatapointNumberInt32(dpID,value,false);
                     }
-                }
-                else
-                {
-                    double dValue = (value/(double)pow(10, properties[id]->numberProperty.resolution)) + properties[id]->numberProperty.minValue;
+                }else{
+                    double dValue = (value/(double)_pow(10, properties[id]->numberProperty.resolution)) + properties[id]->numberProperty.minValue;
 
-                    if(intoyunDiscoverProperty(dpID) != -1)//数据点存在
-                    {
+                    if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
                         intoyunPlatformWriteDatapointNumberDouble(dpID,dValue,false);
                     }
                 }
-
             }
-
             break;
 
             case DATA_TYPE_ENUM:
             {
                 dataLength = payload[index++] & 0xff;
                 int value = payload[index++] & 0xff;
-                if(dataLength == 2)
-                {
+                if(dataLength == 2){
                     value = (value << 8) | payload[index++];
-                }
-                else if(dataLength == 3)
-                {
+                }else if(dataLength == 3){
                     value = (value << 8) | payload[index++];
                     value = (value << 8) | payload[index++];
-                }
-                else if(dataLength == 4)
-                {
+                }else if(dataLength == 4){
                     value = (value << 8) | payload[index++];
                     value = (value << 8) | payload[index++];
                     value = (value << 8) | payload[index++];
                 }
 
-                if(intoyunDiscoverProperty(dpID) != -1)//数据点存在
-                {
+                if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
                     intoyunPlatformWriteDatapointEnum(dpID,value,false);
                 }
             }
@@ -1053,21 +1041,18 @@ void intoyunParseReceiveDatapoints(const uint8_t *payload, uint32_t len, uint8_t
             case DATA_TYPE_STRING:
             {
                 dataLength = payload[index++] & 0xff;
-                if(dataLength >= 0x80) //数据长度有2个字节
-                {
+                if(dataLength >= 0x80) {//数据长度有2个字节
                     dataLength = dataLength & 0x7f;
                     dataLength = (dataLength) << 8 | payload[index++];
                 }
                 char *str = (char *)malloc(dataLength+1);
-                if(NULL != str)
-                {
+                if(NULL != str){
                     memset(str, 0, dataLength+1);
                     memcpy(str, &payload[index], dataLength);
                 }
 
                 index += dataLength;
-                if(intoyunDiscoverProperty(dpID) != -1)//数据点存在
-                {
+                if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
                     intoyunPlatformWriteDatapointString(dpID,str,false);
                 }
                 free(str);
@@ -1077,17 +1062,13 @@ void intoyunParseReceiveDatapoints(const uint8_t *payload, uint32_t len, uint8_t
             case DATA_TYPE_BINARY:
             {
                 dataLength = payload[index++] & 0xff;
-                if(dataLength >= 0x80) //数据长度有2个字节
-                {
+                if(dataLength >= 0x80) {//数据长度有2个字节
                     dataLength = dataLength & 0x7f;
                     dataLength = (dataLength) << 8 | payload[index++];
                 }
-
-                if(intoyunDiscoverProperty(dpID) != -1)//数据点存在
-                {
+                if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
                     intoyunPlatformWriteDatapointBinary(dpID, &payload[index], dataLength,false);
                 }
-
                 index += dataLength;
             }
             break;
@@ -1096,6 +1077,12 @@ void intoyunParseReceiveDatapoints(const uint8_t *payload, uint32_t len, uint8_t
                 break;
         }
     }
+
+    bool dpGetAllDatapoint = false;
+    if (RESULT_DATAPOINT_NEW == intoyunReadDatapointBool(DPID_DEFAULT_BOOL_GETALLDATAPOINT, &dpGetAllDatapoint)) {
+        log_v("datapoint refresh\r\n");
+        intoyunSendDatapointAll(true);
+    }
 }
 
 //组织数据点数据
@@ -1103,12 +1090,9 @@ static uint16_t intoyunFormDataPointBinary(int property_index, uint8_t* buffer)
 {
     int32_t index = 0;
 
-    if(properties[property_index]->dpID < 0x80)
-    {
+    if(properties[property_index]->dpID < 0x80){
         buffer[index++] = properties[property_index]->dpID & 0xFF;
-    }
-    else
-    {
+    }else{
         buffer[index++] = (properties[property_index]->dpID >> 8) | 0x80;
         buffer[index++] = properties[property_index]->dpID & 0xFF;
     }
@@ -1125,14 +1109,11 @@ static uint16_t intoyunFormDataPointBinary(int property_index, uint8_t* buffer)
             {
                 buffer[index++] = 0x01;
                 int32_t value;
-                if(properties[property_index]->numberProperty.resolution == 0)
-                {
+                if(properties[property_index]->numberProperty.resolution == 0){
                     value = (int32_t)properties[property_index]->numberIntValue;
-                }
-                else
-                {
+                }else{
                     value = (properties[property_index]->numberDoubleValue - properties[property_index]->numberProperty.minValue) \
-                        * pow(10, properties[property_index]->numberProperty.resolution);
+                        * _pow(10, properties[property_index]->numberProperty.resolution);
                 }
 
                 if(value & 0xFFFF0000) {
@@ -1163,12 +1144,9 @@ static uint16_t intoyunFormDataPointBinary(int property_index, uint8_t* buffer)
                 uint16_t strLength = strlen(properties[property_index]->stringValue);
 
                 buffer[index++] = 0x03;
-                if(strLength < 0x80)
-                {
+                if(strLength < 0x80){
                     buffer[index++] = strLength & 0xFF;
-                }
-                else
-                {
+                }else{
                     buffer[index++] = (strLength >> 8) | 0x80;
                     buffer[index++] = strLength & 0xFF;
                 }
@@ -1218,65 +1196,61 @@ static uint16_t intoyunFormAllDatapoint(uint8_t *buffer, uint16_t len, bool dpFo
     for (int i = 0; i < properties_count; i++)
     {
         //只允许下发  不上传
-        if (properties[i]->permission == DP_PERMISSION_DOWN_ONLY)
-        {
+        if (properties[i]->permission == DP_PERMISSION_DOWN_ONLY){
             continue;
         }
-
         //系统默认dpID  不上传
-        if (properties[i]->dpID > 0xFF00)
-        {
+        if (properties[i]->dpID > 0x3F00){
             continue;
         }
-
-        if( dpForm || ((!dpForm) && properties[i]->change) )
-        {
+        if( dpForm || ((!dpForm) && properties[i]->change) ){
             index += intoyunFormDataPointBinary(i, (uint8_t *)buffer+index);
         }
     }
     return index;
 }
 
+//发送数据
+static void intoyunTransmitData(const uint8_t *buffer, uint16_t len)
+{
+    ProtocolSendPlatformData(buffer, len);
+}
+
 //发送单个数据点的数据
-void intoyunSendSingleDatapoint(const uint16_t dpID)
+static void intoyunSendSingleDatapoint(const uint16_t dpID)
 {
     //发送时间间隔到
     uint32_t current_millis = millis();
-    int32_t elapsed_millis = current_millis - properties[dpID]->runtime;
-    if (elapsed_millis < 0)
-    {
-        elapsed_millis =  0xFFFFFFFF - properties[dpID]->runtime + current_millis;
+    int32_t elapsed_millis = current_millis - g_datapoint_control.runtime;
+    if (elapsed_millis < 0){
+        elapsed_millis =  0xFFFFFFFF - g_datapoint_control.runtime + current_millis;
     }
 
-    if (elapsed_millis >= properties[dpID]->lapse)
-    {
+    if (elapsed_millis >= g_datapoint_control.datapoint_transmit_lapse*1000){
         uint8_t buffer[256];
         uint16_t len;
 
         len = intoyunFormSingleDatapoint(dpID, buffer, sizeof(buffer));
         intoyunTransmitData(buffer,len);
-        properties[dpID]->runtime = current_millis;
+        g_datapoint_control.runtime = current_millis;
     }
 }
 
 //发送所有数据点的数据
-void intoyunSendDatapointAll(bool dpForm)
+static void intoyunSendDatapointAll(bool dpForm)
 {
     uint8_t buffer[512];
     uint16_t len;
 
+    if(0 == intoyunGetPropertyPermissionUpCount()) {
+        return;
+    }
+
     len = intoyunFormAllDatapoint(buffer, sizeof(buffer), dpForm);
 
-    #ifdef INTOYUN_DEBUG
-    printf("send data length = %d\r\n",len);
-    printf("send data:\r\n");
-    for(uint16_t i=0;i<len;i++)
-    {
-        printf("0x%x",buffer[i]);
-        printf(" ");
-    }
-    printf("\r\n");
-    #endif
+    log_v("send data length = %d\r\n",len);
+    log_v("send data:\r\n");
+    log_v_dump(buffer,len);
 
     intoyunTransmitData(buffer,len);
 }
@@ -1285,8 +1259,7 @@ void intoyunSendCustomData(const uint8_t *buffer, uint16_t len)
 {
     uint8_t buf[256];
     uint16_t index = len+1;
-    if(index > 256)
-    {
+    if(index > 256){
         index = 256;
     }
 
@@ -1295,15 +1268,13 @@ void intoyunSendCustomData(const uint8_t *buffer, uint16_t len)
     intoyunTransmitData(buf,index);
 }
 
-//发送数据
-void intoyunTransmitData(const uint8_t *buffer, uint16_t len)
-{
-    ProtocolSendPlatformData(buffer, len);
-}
-
 void intoyunSendAllDatapointManual(void)
 {
     if(0 == intoyunGetPropertyCount()) {
+        return;
+    }
+
+    if(0 == intoyunGetPropertyPermissionUpCount()) {
         return;
     }
 
@@ -1311,23 +1282,8 @@ void intoyunSendAllDatapointManual(void)
         return;
     }
 
-    //发送时间间隔到
-    uint32_t current_millis = millis();
-    int32_t elapsed_millis = current_millis - g_datapoint_control.runtime;
-    if (elapsed_millis < 0)
-    {
-        elapsed_millis =  0xFFFFFFFF - g_datapoint_control.runtime + current_millis;
-    }
-
-    //发送时间时间到
-    if ( elapsed_millis >= g_datapoint_control.datapoint_transmit_lapse*1000 )
-    {
-        intoyunSendDatapointAll(true);
-
-        g_datapoint_control.runtime = millis();
-        intoyunPropertyChangeClear();
-    }
-
+    intoyunSendDatapointAll(true);
+    intoyunPropertyChangeClear();
 }
 
 void intoyunSendDatapointAutomatic(void)
@@ -1338,36 +1294,34 @@ void intoyunSendDatapointAutomatic(void)
         return;
     }
 
+    if(0 == intoyunGetPropertyPermissionUpCount()) {
+        return;
+    }
+
     if(DP_TRANSMIT_MODE_MANUAL == intoyunGetDatapointTransmitMode()) {
         return;
     }
 
     //当数值发生变化
-    if(intoyunPropertyChanged())
-    {
+    if(intoyunPropertyChanged()){
         sendFlag = true;
         intoyunSendDatapointAll(false);
-    }
-    else
-    {
+    }else{
         //发送时间间隔到
         uint32_t current_millis = millis();
         int32_t elapsed_millis = current_millis - g_datapoint_control.runtime;
-        if (elapsed_millis < 0)
-        {
+        if (elapsed_millis < 0){
             elapsed_millis =  0xFFFFFFFF - g_datapoint_control.runtime + current_millis;
         }
 
         //发送时间时间到
-        if ( elapsed_millis >= g_datapoint_control.datapoint_transmit_lapse*1000 )
-        {
+        if ( elapsed_millis >= g_datapoint_control.datapoint_transmit_lapse*1000 ){
             sendFlag = true;
             intoyunSendDatapointAll(true);
         }
     }
 
-    if(sendFlag)
-    {
+    if(sendFlag){
         g_datapoint_control.runtime = millis();
         intoyunPropertyChangeClear();
     }

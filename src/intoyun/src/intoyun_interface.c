@@ -17,16 +17,33 @@
   ******************************************************************************
 */
 #include "intoyun_interface.h"
+#include "hal_interface.h"
 
-const intoyun_t IntoYun =
+
+const system_t System =
 {
     intoyunInit,
+    intoyunLoop,
     intoyunSetEventCallback,
     intoyunSetMode,
-    intoyunLoop,
+    intoyunGetMode,
     intoyunDatapointControl,
-    intoyunSendProductInfo,
+    intoyunSetDevice,
+    intoyunGetDevice,
+    intoyunGetInfo,
+    intoyunExecuteRestart,
+    intoyunExecuteRestore,
+    intoyunPutPipe,
+    intoyunGetNetTime,
+    intoyunGetStatus,
+};
 
+const cloud_t Cloud =
+{
+    intoyunConnect,
+    intoyunConnected,
+    intoyunDisconnect,
+    intoyunDisconnected,
     intoyunDefineDatapointBool,
     intoyunDefineDatapointNumber,
     intoyunDefineDatapointEnum,
@@ -57,3 +74,53 @@ const intoyun_t IntoYun =
     intoyunSendAllDatapointManual,
     intoyunSendCustomData,
 };
+
+void delay(uint32_t ms)
+{
+    uint32_t start_millis = HAL_Millis();
+    uint32_t current_millis = 0;
+    uint32_t elapsed_millis = 0;
+
+    if (ms == 0) return;
+    while (1) {
+        current_millis = HAL_Millis();
+        if (current_millis < start_millis){
+            elapsed_millis =  UINT_MAX - start_millis + current_millis;
+        } else {
+            elapsed_millis = current_millis - start_millis;
+        }
+
+        if (elapsed_millis > ms) {
+            break;
+        }
+        intoyunLoop();
+    }
+}
+
+uint32_t millis(void)
+{
+    return HAL_Millis();
+}
+
+uint32_t timerGetId(void)
+{
+    return millis();
+}
+
+bool timerIsEnd(uint32_t timerID, uint32_t time)
+{
+    uint32_t current_millis = millis();
+    uint32_t elapsed_millis = 0;
+
+    //Check for wrapping
+    if (current_millis < timerID){
+        elapsed_millis =  UINT_MAX-timerID + current_millis;
+    } else {
+        elapsed_millis = current_millis - timerID;
+    }
+
+    if (elapsed_millis >= time){
+        return true;
+    }
+    return false;
+}

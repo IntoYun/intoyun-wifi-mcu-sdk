@@ -28,39 +28,55 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-/** 事件枚举*/
+enum SystemEvents
+{
+    event_mode_changed   = 1,
+    event_network_status = 2,
+    event_cloud_data     = 3,
+};
+
+/** 模组工作模式事件枚举*/
 typedef enum
 {
-    EVENT_MODE_NORMAL = 0,    //YunSlave处于正常工作模式
-    EVENT_MODE_IMLINK_CONFIG, //YunSlave处于IMLINK配置模式
-    EVENT_MODE_AP_CONFIG,     //YunSlave处于AP配置模式
-    EVENT_MODE_BINDING,       //YunSlave处于绑定模式
-    EVENT_MODE_TEST,          //YunSlave处于测试模式
+    ep_mode_normal         = 1,
+    ep_mode_imlink_config  = 2,
+    ep_mode_ap_config      = 3,
+    ep_mode_binding        = 4,
+} event_mode_type_t;
 
-    EVENT_CON_ROUTER,         //YunSlave已连接路由器
-    EVENT_DISCON_ROUTER,      //YunSlave已断开连接路由器
-    EVENT_CON_SERVER,         //YunSlave已连服务器
-    EVENT_DISCON_SERVER,      //YunSlave已断开连服务器
 
-    EVENT_CON_APP,            //YunSlave已连接APP
-    EVENT_DISCON_APP,         //YunSlave已断开APP
-
-    EVENT_DATAPOINT,          //YunSlave接收到数据点
-    EVENT_CUSTOM_DATA,        //YunSlave接受到透传数据
-
-    EVENT_TYPE_MAX            //枚举成员数量计算 (用户误删)
-} event_type_t;
-
-/** WiFi模组配置参数*/
+/** 网络事件枚举*/
 typedef enum
 {
-    MODE_NORMAL = 0,   //设置YunSlave为正常工作模式
-    MODE_IMLINK_CONFIG,//设置YunSlave为ImLink配置模式
-    MODE_AP_CONFIG,    //设置YunSlave为AP配置模式
-    MODE_BINDING,      //设置YunSlave为绑定模式
-    MODE_TEST          //设置YunSlave为产测模式
+    ep_network_disconnect_router = 1, //已断开路由器
+    ep_network_connect_router,        //已连接路由器
+    ep_network_disconnect_server,     //已断开连服务器
+    ep_network_connect_server,        //已连服务器
+} event_network_type_t;
+
+typedef enum
+{
+    ep_datapoint_data = 1,            //接收到数据点
+    ep_custom_data,                   //接受到透传数据
+}event_cloud_data_type_t;
+
+/** WiFi 模组状态*/
+typedef enum
+{
+    MODULE_DISCONNECT_ROUTER = 1,  //未连接路由器
+    MODULE_CONNECT_ROUTER,         //已连接路由器,未连接服务器
+    MODULE_CONNECT_SERVER,         //已连接路由并连接服务器
+}module_status_type_t;
+
+
+/** WiFi模组工作模式*/
+typedef enum
+{
+    MODE_NORMAL = 1,   //正常工作模式
+    MODE_IMLINK_CONFIG,//ImLink配置模式
+    MODE_AP_CONFIG,    //为AP配置模式
+    MODE_BINDING,      //绑定模式
 }mode_type_t;
-
 
 
 typedef enum {
@@ -175,7 +191,7 @@ typedef uint32_t MDM_IP;
 
 
 typedef struct{
-    char module_version[10];//模组版本号
+    char module_version[20];//模组版本号
     char module_type[10];//模组类型
     char device_id[32];//设备ID
     uint8_t at_mode;//注册类型
@@ -197,63 +213,54 @@ typedef struct
 }wifi_info_t;
 
 typedef struct{
-    event_type_t network_event;
+    event_network_type_t network_event;
     wifi_info_t wifi;
 }network_t;
 
+typedef struct{
+    module_status_type_t module_status;
+    wifi_info_t wifi;
+}module_status_t;
+
+typedef struct{
+    uint8_t status;
+    char net_time[32];
+    char timestamp[16];
+}network_time_t;
+
+typedef struct{
+    int zone;
+    char server_domain[32];
+    int server_port;
+    char register_domain[32];
+    int register_port;
+    char update_domain[32];
+}basic_params_t;
+
 typedef int (*callbackPtr)(int type, const char *buf, int len, void *param);
 
-//数据缓冲区
-void PipeInit(pipe_t *pipe, int n, char *b);// 默认值b = NULL
-void PipeRelease(pipe_t *pipe);
-void PipeDump(pipe_t *pipe);
-bool PipeWriteable(pipe_t *pipe);
-int PipeFree(pipe_t *pipe);
-char PipePutc(pipe_t *pipe, char c);
-int PipePut(pipe_t *pipe, const char* p, int n, bool t );//默认值t = false
-bool PipeReadable(pipe_t *pipe);
-int PipeSize(pipe_t *pipe);
-char PipeGetc(pipe_t *pipe);
-int PipeGet(pipe_t *pipe, char *p, int n, bool t);//默认值t = false
-int PipeSet(pipe_t *pipe, int ix);
-char PipeNext(pipe_t *pipe);
-void PipeDone(pipe_t *pipe);
-
-//串口接收
-int SerialPipeWriteable(void);
-int SerialPipePutc(int c);
-int SerialPipePut(const void* buffer, int length, bool blocking);
-int SerialPipeReadable(pipe_t *pipe);
-int SerialPipeGetc(pipe_t *pipe);
-int SerialPipeGet(pipe_t *pipe, void* buffer, int length, bool blocking);
-void SerialPipeRxIrqBuf(uint8_t c);
+static int PipeFree(pipe_t *pipe);
+static int PipeSize(pipe_t *pipe);
 
 //AT指令解析
 bool ProtocolParserInit(void);
-void ProtocolParserCancel(void);
-void ProtocolParserResume(void);
-int ProtocolParserSend(const char* buf, int len);
-int ProtocolParserSendFormated(const char* format, ...);
-int ProtocolParserWaitFinalResp(callbackPtr cb, void* param, uint32_t timeout_ms); //NULL NULL 5000
-int ProtocolParserMatch(pipe_t *pipe, int len, const char* sta, const char* end);
-int ProtocolParserFormated(pipe_t *pipe, int len, const char* fmt);
-int ProtocolParserGetOnePacket(pipe_t *pipe, char* buf, int len);
-int ProtocolParserTransmit(const void* buf, int len);
-int ProtocolParserGetPacket(char* buffer, int length);
-
-bool ProtocolModuleRestart(void);
-bool ProtocolModuleRestore(void);
-int ProtocolGetModuleInfoCallback(int type, const char* buf, int len, device_info_t *info);
-bool ProtocolGetModuleInfo(device_info_t *info);
-int ProtocolGetDeviceInfoCallback(int type, const char* buf, int len, device_info_t *info);
-bool ProtocolGetDeviceInfo(device_info_t *info);
-bool ProtocolSetDeviceInfo(char *product_id, char *hardware_version, char *software_version);
-bool ProtocolSetDeviceRegisterInfo(uint8_t at_mode, char *device_id, char *activation_code,char *access_token);
-int ProtocolQueryWorkModeCallback(int type, const char* buf, int len, char *mode);
-uint8_t ProtocolQueryWorkMode(void);
-bool ProtocolSetWorkMode(uint8_t mode, uint32_t timeout);
-int ProtocolQueryNetworkStatusCallback(int type, const char* buf, int len, network_t *network);
-bool ProtocolQueryNetworkStatus(network_t *network);
+void ProtocolPutPipe(uint8_t c);
+bool ProtocolExecuteRestart(void);
+bool ProtocolExecuteRestore(void);
+bool ProtocolQueryInfo(device_info_t *info);
+bool ProtocolQueryDevice(device_info_t *info);
+bool ProtocolSetupDevice(char *product_id, char *hardware_version, char *software_version);
+bool ProtocolQueryJoinAP(module_status_t *status);
+bool ProtocolSetupJoinAP(char *ssid,char *pwd);
+int ProtocolQueryMode(void);
+int ProtocolSetupMode(uint8_t mode, uint32_t timeout);
+bool ProtocolSetupJoinParams(char *device_id,char *access_token);
+bool ProtocolQueryBasicParams(basic_params_t *basicParams);
+bool ProtocolSetupBasicParams(int zone, char *server_domain,int server_port,char *register_domain,int register_port, char *update_domain);
+bool ProtocolQueryNetTime(network_time_t *netTime);
+int ProtocolSetupRegister(char *product_id, char *timestamp, char *signature);
+bool ProtocolSetupJoin(uint8_t mode);
+bool ProtocolQueryStatus(module_status_t *status);
 
 void ProtocolModuleActiveSendHandle(void);
 uint8_t ProtocolParserPlatformData(const uint8_t *platformData, uint16_t len);
