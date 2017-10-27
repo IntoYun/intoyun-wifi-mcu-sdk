@@ -20,12 +20,6 @@
 #ifndef INTOYUN_CONFIG_H_
 #define INTOYUN_CONFIG_H_
 
-#define PRODUCT_ID                       "QRGro2Xk9P4c42eb"//产品ID
-#define PRODUCT_SECRET                   "606b833b5879b55498f89f03d95f6e29"//产品秘钥
-
-#define HARDWARE_VERSION                 "V1.0.0"          //硬件版本号
-#define SOFTWARE_VERSION                 "V1.0.0"          //软件版本号
-
 #define SDK_VERSION                               "1.0.0"
 
 #define INTOYUN_DEBUG_LEVEL                       5 //调试信息输出等级

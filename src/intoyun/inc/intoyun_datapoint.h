@@ -110,7 +110,7 @@ void intoyunSetEventCallback(event_handler_t handler);
 bool intoyunSetMode(mode_type_t mode, uint32_t timeout);
 mode_type_t intoyunGetMode(void);
 void intoyunDatapointControl(dp_transmit_mode_t mode, uint32_t lapse);
-void intoyunSetDevice(char *productId, char *hardVer, char *softVer);
+void intoyunSetDevice(char *productId, char *productSecret, char *hardVer, char *softVer);
 void intoyunGetDevice(char *productId, char *hardVer, char *softVer);
 void intoyunGetInfo(char *moduleVersion, char *moduleType, char *deviceId, uint8_t *at_mode);
 bool intoyunExecuteRestart(void);

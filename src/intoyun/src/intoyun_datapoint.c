@@ -32,6 +32,8 @@ int properties_count = 0;
 event_handler_t eventHandler = NULL;
 bool cloudConnected = false;
 bool moduleConnectNetwork = false;
+static char product_id[17];
+static char product_secret[33];
 static uint8_t at_mode = 0;
 static bool deviceRegisterEn = true;
 static uint32_t deviceRegisterID = 0;
@@ -80,11 +82,11 @@ static void intoyunDeviceRegister(void)
                 log_v("timestamp=%s\r\n",networkTime.timestamp);
                 char tmp[64] = {0};
                 char signature[33] = {0};
-                sprintf(tmp,"%s%s",networkTime.timestamp,PRODUCT_SECRET);
+                sprintf(tmp,"%s%s",networkTime.timestamp,product_secret);
                 log_v("tmp=%s\r\n",tmp);
                 md5_output((uint8_t *)tmp,strlen(tmp),signature);
                 log_v("signature=%s\r\n",signature);
-                if(ProtocolSetupRegister(PRODUCT_ID,networkTime.timestamp,signature) == 1){
+                if(ProtocolSetupRegister(product_id,networkTime.timestamp,signature) == 1){
                     at_mode = 1;
                     log_v("device register success\r\n");
                     return;
@@ -121,8 +123,12 @@ mode_type_t intoyunGetMode(void)
 }
 
 
-void intoyunSetDevice(char *productId, char *hardVer, char *softVer)
+void intoyunSetDevice(char *productId, char *productSecret, char *hardVer, char *softVer)
 {
+    strncpy(product_id,productId,sizeof(product_id));
+    strncpy(product_secret,productSecret,sizeof(product_secret));
+    log_v("product_id=%s\r\n",product_id);
+    log_v("product_secret=%s\r\n",product_secret);
     ProtocolSetupDevice(productId,hardVer,softVer);
 }
 

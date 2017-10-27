@@ -34,7 +34,7 @@ typedef struct
     bool (*setModuleMode)(mode_type_t mode, uint32_t timeout);
     mode_type_t (*getModuleMode)(void);
     void (*setDatapointControl)(dp_transmit_mode_t mode, uint32_t lapse);
-    void (*setDeviceInfo)(char *productId, char *hardVer, char *softVer);  //设置设备信息
+    void (*setDeviceInfo)(char *productId, char *productSecret, char *hardVer, char *softVer);  //设置设备信息
     void (*getDeviceInfo)(char *productId, char *hardVer, char *softVer);  //获取设备信息
     void (*getModuleInfo)(char *moduleVersion, char *moduleType, char *deviceId, uint8_t *atMode); //获取模块信息
     bool (*resetModule)(void);

@@ -1,6 +1,12 @@
 #include "intoyun_interface.h"
 #include "stm32f1xx_hal.h"
 
+#define PRODUCT_ID                       "QRGro2Xk9P4c42eb"//产品ID
+#define PRODUCT_SECRET                   "606b833b5879b55498f89f03d95f6e29"//产品秘钥
+#define HARDWARE_VERSION                 "V1.0.0"          //硬件版本号
+#define SOFTWARE_VERSION                 "V1.0.0"          //软件版本号
+
+
 #define LED_PIN             GPIO_PIN_0
 #define LED_GPIO_PORT       GPIOB
 #define LED_ON	 	          HAL_GPIO_WritePin(LED_GPIO_PORT,LED_PIN, GPIO_PIN_RESET)
@@ -154,7 +160,7 @@ int main(void)
     userInit();
     delay(200);
     System.setEventCallback(eventProcess);
-    System.setDeviceInfo(PRODUCT_ID,HARDWARE_VERSION,SOFTWARE_VERSION);
+    System.setDeviceInfo(PRODUCT_ID,PRODUCT_SECRET, HARDWARE_VERSION,SOFTWARE_VERSION);
     Cloud.connect();
 
     while(1)
