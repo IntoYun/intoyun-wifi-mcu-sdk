@@ -1,10 +1,10 @@
 # Objects 文件夹
-project/Objects/*
-project/DebugConfig/*
-project/Listings/*
-project/RTE/*
-project/*.scvd
-project/*.lz
+keil/stm32f103rbx/smartLight/Objects/*
+keil/stm32f103rbx/smartLight/DebugConfig/*
+keil/stm32f103rbx/smartLight/Listings/*
+keil/stm32f103rbx/smartLight/RTE/*
+keil/stm32f103rbx/smartLight/*.scvd
+keil/stm32f103rbx/smartLight/*.lz
 
 # gtags相关文件
 GPATH
