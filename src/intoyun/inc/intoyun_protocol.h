@@ -48,16 +48,16 @@ typedef enum
 /** 网络事件枚举*/
 typedef enum
 {
-    ep_network_disconnect_router = 1, //已断开路由器
-    ep_network_connect_router,        //已连接路由器
-    ep_network_disconnect_server,     //已断开连服务器
-    ep_network_connect_server,        //已连服务器
+    ep_network_status_disconnectd = 1, //已断开路由器
+    ep_network_status_connected,        //已连接路由器
+    ep_cloud_status_disconnected,     //已断开连服务器
+    ep_cloud_status_connected,        //已连服务器
 } event_network_type_t;
 
 typedef enum
 {
-    ep_datapoint_data = 1,            //接收到数据点
-    ep_custom_data,                   //接受到透传数据
+    ep_cloud_data_datapoint = 1,            //接收到数据点
+    ep_cloud_data_custom,                   //接受到透传数据
 }event_cloud_data_type_t;
 
 /** WiFi 模组状态*/

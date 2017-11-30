@@ -534,18 +534,21 @@ read_datapoint_result_t intoyunReadDatapointString(const uint16_t dpID, char *va
     return readResult;
 }
 
-read_datapoint_result_t intoyunReadDatapointBinary(const uint16_t dpID, uint8_t *value, uint16_t len)
+read_datapoint_result_t intoyunReadDatapointBinary(const uint16_t dpID, uint8_t *value, uint16_t *len)
 {
+    uint16_t length = *len;
     int index = intoyunDiscoverProperty(dpID);
     if (index == -1){
         return RESULT_DATAPOINT_NONE;
     }
-
-    for(uint16_t i=0;i<len;i++)
+    if(length > properties[index]->binaryValue.len){
+        length = properties[index]->binaryValue.len;
+    }
+    for(uint16_t i=0;i<length;i++)
     {
         value[i] = properties[index]->binaryValue.value[i];
     }
-    len = properties[index]->binaryValue.len;
+    *len = length;
     read_datapoint_result_t readResult = properties[index]->readFlag;
     properties[index]->readFlag = RESULT_DATAPOINT_OLD;
 

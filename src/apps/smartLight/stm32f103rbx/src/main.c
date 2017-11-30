@@ -29,6 +29,7 @@ int dpEnumLightMode;          //颜色模式
 char dpStringLcdDisplay[20] = "www.intoyun.com";  //字符显示
 double dpNumberTemperature = 11.39;   //温度
 uint8_t dpBinaryVal[9] = {0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9}; //二进制数据
+uint16_t binaryLen;
 
 
 void LED_Init(void)
@@ -72,7 +73,7 @@ void eventProcess(uint8_t eventType, uint8_t event, uint8_t *data, uint32_t len)
 {
     if(eventType == event_cloud_data){
         switch(event){
-        case ep_datapoint_data: //处理平台数据
+        case ep_cloud_data_datapoint: //处理平台数据
             //灯泡控制
             if (RESULT_DATAPOINT_NEW == Cloud.readDatapointBool(DPID_BOOL_SWITCH, &dpBoolLightSwitch)){
                 log_v("switch value = %d\r\n",dpBoolLightSwitch);
@@ -105,29 +106,29 @@ void eventProcess(uint8_t eventType, uint8_t event, uint8_t *data, uint32_t len)
                 log_v("string = %s\r\n",dpStringLcdDisplay);
             }
             //二进制数据
-            if(RESULT_DATAPOINT_NEW == Cloud.readDatapointBinary(DPID_BINARY,dpBinaryVal,9)){
+            if(RESULT_DATAPOINT_NEW == Cloud.readDatapointBinary(DPID_BINARY,dpBinaryVal,&binaryLen)){
                 log_v("dpBinaryVal\r\n");
-                log_v_dump(dpBinaryVal,9);
+                log_v_dump(dpBinaryVal,binaryLen);
             }
 
             break;
-        case ep_custom_data: //接受到透传数据
+        case ep_cloud_data_custom: //接受到透传数据
             break;
         default:
             break;
         }
     }else if(eventType == event_network_status){
             switch(event){
-            case ep_network_disconnect_router:  //模组已断开路由器
+            case ep_network_status_disconnectd:  //模组已断开路由器
                 log_v("event network disconnect router\r\n");
                 break;
-            case ep_network_connect_router:     //模组已连接路由器
+            case ep_network_status_connected:     //模组已连接路由器
                 log_v("event network connect router\r\n");
                 break;
-            case ep_network_disconnect_server:  //模组已断开平台
+            case ep_cloud_status_disconnected:  //模组已断开平台
                 log_v("event network disconnect server\r\n");
                 break;
-            case ep_network_connect_server:     //模组已连接平台
+            case ep_cloud_status_connected:     //模组已连接平台
                 log_v("event network connect server\r\n");
                 break;
             default:

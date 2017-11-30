@@ -64,7 +64,7 @@ typedef struct
     read_datapoint_result_t (*readDatapointNumberDouble)(const uint16_t dpID, double *value);
     read_datapoint_result_t (*readDatapointEnum)(const uint16_t dpID, int *value);
     read_datapoint_result_t (*readDatapointString)(const uint16_t dpID, char *value);
-    read_datapoint_result_t (*readDatapointBinary)(const uint16_t dpID, uint8_t *value, uint16_t len);
+    read_datapoint_result_t (*readDatapointBinary)(const uint16_t dpID, uint8_t *value, uint16_t *len);
 
     //写数据点
     void (*writeDatapointBool)(const uint16_t dpID, bool value);

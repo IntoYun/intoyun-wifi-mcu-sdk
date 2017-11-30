@@ -449,9 +449,9 @@ static int ProtocolParserWaitFinalResp(callbackPtr cb, void* param, uint32_t tim
 
                     uint8_t datapointType = ProtocolParserPlatformData(platformData+1, platformDataLen);
                     if(datapointType == CUSTOMER_DEFINE_DATA){
-                        eventHandler(event_cloud_data,ep_custom_data,platformData+1,platformDataLen);
+                        eventHandler(event_cloud_data,ep_cloud_data_custom,platformData+1,platformDataLen);
                     }else{
-                        eventHandler(event_cloud_data,ep_datapoint_data,NULL,0);
+                        eventHandler(event_cloud_data,ep_cloud_data_datapoint,NULL,0);
                     }
                 }
             }
