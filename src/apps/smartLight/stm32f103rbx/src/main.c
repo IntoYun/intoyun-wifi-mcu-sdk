@@ -69,10 +69,10 @@ void userHandle(void)
 }
 
 
-void eventProcess(uint8_t eventType, uint8_t event, uint8_t *data, uint32_t len)
+void eventProcess(system_event_t event, int param, uint8_t *data, uint16_t len)
 {
-    if(eventType == event_cloud_data){
-        switch(event){
+    if(event == event_cloud_data){
+        switch(param){
         case ep_cloud_data_datapoint: //处理平台数据
             //灯泡控制
             if (RESULT_DATAPOINT_NEW == Cloud.readDatapointBool(DPID_BOOL_SWITCH, &dpBoolLightSwitch)){
@@ -117,9 +117,9 @@ void eventProcess(uint8_t eventType, uint8_t event, uint8_t *data, uint32_t len)
         default:
             break;
         }
-    }else if(eventType == event_network_status){
-            switch(event){
-            case ep_network_status_disconnectd:  //模组已断开路由器
+    }else if(event == event_network_status){
+            switch(param){
+            case ep_network_status_disconnected:  //模组已断开路由器
                 log_v("event network disconnect router\r\n");
                 break;
             case ep_network_status_connected:     //模组已连接路由器
@@ -134,8 +134,8 @@ void eventProcess(uint8_t eventType, uint8_t event, uint8_t *data, uint32_t len)
             default:
                 break;
             }
-    }else if(eventType == event_mode_changed){
-            switch(event){
+    }else if(event == event_mode_changed){
+            switch(param){
             case ep_mode_normal:          //模组已处于正常工作模式
                 log_v("event mode normal\r\n");
                 break;

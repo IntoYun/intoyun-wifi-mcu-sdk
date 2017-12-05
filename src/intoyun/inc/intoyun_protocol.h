@@ -28,13 +28,35 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-enum SystemEvents
+typedef enum
 {
     event_mode_changed   = 1,
     event_network_status = 2,
     event_cloud_data     = 3,
-};
+} system_event_t;
 
+typedef enum SystemEventsParam {
+    //mode change
+    ep_mode_normal                     = 1, //正常工作模式
+    ep_mode_imlink_config              = 2, //imlink配置模式
+    ep_mode_ap_config                  = 3, //ap配置模式
+    ep_mode_binding                    = 4,
+
+    //network status
+    ep_network_status_disconnected     = 1, //已断开路由器
+    ep_network_status_connected        = 2, //已连接路由器
+
+    //Cloud connection status
+    ep_cloud_status_disconnected       = 3, //已断开连服务器
+    ep_cloud_status_connected          = 4, //已连服务器
+
+    //cloud data
+    ep_cloud_data_raw                  = 1, //原始数据 事件
+    ep_cloud_data_datapoint            = 2, //数据点数据协议处理 事件
+    ep_cloud_data_custom               = 3, //自定义数据协议处理 事件
+}system_event_param_t;
+
+#if 0
 /** 模组工作模式事件枚举*/
 typedef enum
 {
@@ -59,6 +81,7 @@ typedef enum
     ep_cloud_data_datapoint = 1,            //接收到数据点
     ep_cloud_data_custom,                   //接受到透传数据
 }event_cloud_data_type_t;
+#endif
 
 /** WiFi 模组状态*/
 typedef enum
@@ -213,7 +236,8 @@ typedef struct
 }wifi_info_t;
 
 typedef struct{
-    event_network_type_t network_event;
+    // event_network_type_t network_event;
+    system_event_param_t network_event;
     wifi_info_t wifi;
 }network_t;
 
