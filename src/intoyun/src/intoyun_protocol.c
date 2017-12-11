@@ -401,52 +401,69 @@ static int ProtocolParserWaitFinalResp(callbackPtr cb, void* param, uint32_t tim
                 #endif
 
                 int a,b,c,d;
-                network_t network;
-                int modeEvent;
-
+                int modeEventParam;
+                int networkEventParam;
+                int event;
+                wifi_info_t wifi;
                 uint16_t platformDataLen;
                 uint8_t *platformData;
 
                 //+RECMODE:<event>
-                if(sscanf(cmd,"RECMODE:%d\r\n",(int*)&modeEvent) == 1){
-                    #ifdef PROTOCOL_DEBUG
-                    log_v("recmode = %d\r\n",modeEvent);
-                    #endif
-                    eventHandler(event_mode_changed,modeEvent,NULL,0);
+                if(sscanf(cmd,"RECMODE:%d\r\n",(int*)&event) == 1){
+                    switch(event){
+                    case 1:
+                        modeEventParam = ep_mode_normal;
+                        break;
+                    case 2:
+                        modeEventParam = ep_mode_imlink_config;
+                        break;
+                    case 3:
+                        modeEventParam = ep_mode_ap_config;
+                        break;
+                    case 4:
+                        modeEventParam = ep_mode_binding;
+                        break;
+                    default:
+                        break;
+                    }
+                    eventHandler(event_mode_changed,modeEventParam,NULL,0);
                 }
                 //+RECNET:<event>,[<ssid>,<ip>,<rssi>]
-                else if(sscanf(cmd,"RECNET:%d",(int*)&network.network_event) == 1)
+                else if(sscanf(cmd,"RECNET:%d",(int*)&event) == 1)
                 {
-                    if(network.network_event == 1){
+                    switch(event){
+                    case 1:
+                        networkEventParam = ep_network_status_disconnected;
                         moduleConnectNetwork = false;
-                    }
-                    else if(network.network_event == 2){
+                        break;
+                    case 2:
+                        networkEventParam = ep_network_status_connected;
                         moduleConnectNetwork = true;
-                    }
-                    else if(network.network_event == 3){
+                        break;
+                    case 3:
+                        networkEventParam = ep_cloud_status_disconnected;
                         cloudConnected = false;
-                    }else if(network.network_event == 4){
+                        break;
+                    case 4:
+                        networkEventParam = ep_cloud_status_connected;
                         cloudConnected = true;
+                        break;
+                    default:
+                        break;
                     }
-
-                    if(network.network_event > 1){
-                        if(sscanf(cmd,"RECNET:%d,\"%[^\"]\",\""IPSTR"\",%d\r\n",(int*)&network.network_event,network.wifi.ssid,(int*)&a,(int*)&b,(int*)&c,(int*)&d,(int*)&network.wifi.rssi) == 7){
-                            network.wifi.ipAddr = IPADR(a,b,c,d);
-                            #ifdef PROTOCOL_DEBUG
-                            log_v("network event = %d\r\n",network.network_event);
-                            log_v("network wifi ssid = %s\r\n",network.wifi.ssid);
-                            log_v("network wifi ip = 0x%x\r\n",network.wifi.ipAddr);
-                            log_v("network widi rssi = %d\r\n",network.wifi.rssi);
-                            #endif
+                    if(networkEventParam > 1){
+                        if(sscanf(cmd,"RECNET:%d,\"%[^\"]\",\""IPSTR"\",%d\r\n",(int*)&networkEventParam,wifi.ssid,(int*)&a,(int*)&b,(int*)&c,(int*)&d,(int*)&wifi.rssi) == 7){
+                            wifi.ipAddr = IPADR(a,b,c,d);
                         }
                     }
-                    eventHandler(event_network_status,network.network_event,NULL,0);
+                    eventHandler(event_network_status,networkEventParam,NULL,0);
                 }
                 //+RECDATA,<len>:<data>
                 else if(sscanf(cmd, "RECDATA,%d", (int*)&platformDataLen) == 1)
                 {
                     platformData = (uint8_t *)strchr(buf, ':');
-
+                    //原始数据
+                    eventHandler(event_cloud_data,ep_cloud_data_raw,platformData,platformDataLen);
                     uint8_t datapointType = ProtocolParserPlatformData(platformData+1, platformDataLen);
                     if(datapointType == CUSTOMER_DEFINE_DATA){
                         eventHandler(event_cloud_data,ep_cloud_data_custom,platformData+1,platformDataLen);

@@ -35,7 +35,7 @@ typedef enum
     event_cloud_data     = 3,
 } system_event_t;
 
-typedef enum SystemEventsParam {
+enum SystemEventsParam {
     //mode change
     ep_mode_normal                     = 1, //正常工作模式
     ep_mode_imlink_config              = 2, //imlink配置模式
@@ -54,34 +54,7 @@ typedef enum SystemEventsParam {
     ep_cloud_data_raw                  = 1, //原始数据 事件
     ep_cloud_data_datapoint            = 2, //数据点数据协议处理 事件
     ep_cloud_data_custom               = 3, //自定义数据协议处理 事件
-}system_event_param_t;
-
-#if 0
-/** 模组工作模式事件枚举*/
-typedef enum
-{
-    ep_mode_normal         = 1,
-    ep_mode_imlink_config  = 2,
-    ep_mode_ap_config      = 3,
-    ep_mode_binding        = 4,
-} event_mode_type_t;
-
-
-/** 网络事件枚举*/
-typedef enum
-{
-    ep_network_status_disconnectd = 1, //已断开路由器
-    ep_network_status_connected,        //已连接路由器
-    ep_cloud_status_disconnected,     //已断开连服务器
-    ep_cloud_status_connected,        //已连服务器
-} event_network_type_t;
-
-typedef enum
-{
-    ep_cloud_data_datapoint = 1,            //接收到数据点
-    ep_cloud_data_custom,                   //接受到透传数据
-}event_cloud_data_type_t;
-#endif
+};
 
 /** WiFi 模组状态*/
 typedef enum
@@ -234,12 +207,6 @@ typedef struct
     int rssi;        // when scanning
     MDM_IP  ipAddr;  // byte 0 is MSB, byte 3 is LSB
 }wifi_info_t;
-
-typedef struct{
-    // event_network_type_t network_event;
-    system_event_param_t network_event;
-    wifi_info_t wifi;
-}network_t;
 
 typedef struct{
     module_status_type_t module_status;
