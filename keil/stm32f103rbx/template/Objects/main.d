@@ -1,0 +1,16 @@
+.\objects\main.o: ..\..\..\src\apps\template\stm32f103rbx\src\main.c
+.\objects\main.o: ..\..\..\src\apps\template\stm32f103rbx\inc\project_config.h
+.\objects\main.o: ..\..\..\src\intoyun\inc\intoyun_interface.h
+.\objects\main.o: ..\..\..\src\intoyun\inc\intoyun_datapoint.h
+.\objects\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
+.\objects\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
+.\objects\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
+.\objects\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\objects\main.o: ..\..\..\src\intoyun\inc\intoyun_protocol.h
+.\objects\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdarg.h
+.\objects\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
+.\objects\main.o: ..\..\..\src\intoyun\inc\intoyun_log.h
+.\objects\main.o: ..\..\..\src\hal\stm32f103rbx\inc\hal_interface.h
+.\objects\main.o: ..\..\..\src\intoyun\inc\intoyun_config.h
