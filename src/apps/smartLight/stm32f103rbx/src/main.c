@@ -44,6 +44,7 @@ void LED_Init(void)
     HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_RESET);
 }
 
+#if 0
 void userInit(void)
 {
     LED_Init();
@@ -67,6 +68,7 @@ void userHandle(void)
     Cloud.writeDatapointString(DPID_STRING_LCD_DISPLAY,dpStringLcdDisplay);
     Cloud.writeDatapointBinary(DPID_BINARY,dpBinaryVal,9);
 }
+#endif
 
 
 void eventProcess(system_event_t event, int param, uint8_t *data, uint16_t len)
@@ -74,6 +76,7 @@ void eventProcess(system_event_t event, int param, uint8_t *data, uint16_t len)
     if(event == event_cloud_data){
         switch(param){
         case ep_cloud_data_datapoint: //处理平台数据
+            #if 0
             //灯泡控制
             if (RESULT_DATAPOINT_NEW == Cloud.readDatapointBool(DPID_BOOL_SWITCH, &dpBoolLightSwitch)){
                 log_v("switch value = %d\r\n",dpBoolLightSwitch);
@@ -110,6 +113,7 @@ void eventProcess(system_event_t event, int param, uint8_t *data, uint16_t len)
                 log_v("dpBinaryVal\r\n");
                 log_v_dump(dpBinaryVal,binaryLen);
             }
+            #endif
 
             break;
         case ep_cloud_data_custom: //接受到透传数据
@@ -158,7 +162,7 @@ int main(void)
 {
     System.init();
     log_v("wifi mcu slave\r\n");
-    userInit();
+    /* userInit(); */
     delay(200);
     System.setEventCallback(eventProcess);
     System.setDeviceInfo(PRODUCT_ID,PRODUCT_SECRET, HARDWARE_VERSION,SOFTWARE_VERSION);
@@ -167,8 +171,8 @@ int main(void)
     while(1)
     {
         System.loop();
-        if(Cloud.connected()){
-            userHandle();
-        }
+        /* if(Cloud.connected()){ */
+        /*     userHandle(); */
+        /* } */
     }
 }

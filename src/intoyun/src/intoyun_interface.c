@@ -44,6 +44,8 @@ const cloud_t Cloud =
     intoyunConnected,
     intoyunDisconnect,
     intoyunDisconnected,
+
+    #ifdef CONFIG_INTOYUN_DATAPOINT
     intoyunDefineDatapointBool,
     intoyunDefineDatapointNumber,
     intoyunDefineDatapointEnum,
@@ -72,8 +74,34 @@ const cloud_t Cloud =
     intoyunSendDatapointBinary,
 
     intoyunSendAllDatapointManual,
+    #endif
     intoyunSendCustomData,
 };
+
+#ifdef CONFIG_INTOYUN_KEY
+const keys_t Key = {
+    intoyunKeyInit,
+    intoyunKeySetParams,
+    intoyunKeyRegister,
+    intoyunKeyClickCb,
+    intoyunKeyDoubleClickCb,
+    intoyunKeyPressStartCb,
+    intoyunKeyPressStopCb,
+    intoyunKeyPressDuringCb,
+    intoyunKeyLoop,
+};
+#endif
+
+#ifdef CONFIG_INTOYUN_TIMER
+const timers_t Timer = {
+    intoyunTimerRegister,
+    intoyunTimerChangePeriod,
+    intoyunTimerStart,
+    intoyunTimerStop,
+    intoyunTimerReset,
+    intoyunTimerLoop,
+};
+#endif
 
 void delay(uint32_t ms)
 {

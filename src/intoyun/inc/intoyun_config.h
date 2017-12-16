@@ -28,6 +28,15 @@
 #define PIPE_MAX_SIZE                             256 //串口接收缓冲区大小
 #define DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL     20 //数据点自动发送时间间隔设置
 
+//注释掉将不使用数据点解析功能
+#define CONFIG_INTOYUN_DATAPOINT
+
+//注释掉将不使用按键功能
+#define CONFIG_INTOYUN_KEY
+
+//注释掉将不使用定时器回调功能
+#define CONFIG_INTOYUN_TIMER
+
 #define CONFIG_NOASSERT
 
 #endif

@@ -21,6 +21,9 @@
 
 #include "intoyun_datapoint.h"
 #include "intoyun_protocol.h"
+#include "intoyun_key.h"
+#include "intoyun_timer.h"
+#include "intoyun_config.h"
 #include "intoyun_log.h"
 
 #define UINT_MAX    0xFFFFFFFF
@@ -51,7 +54,8 @@ typedef struct
     void (*disconnect)(void);
     bool (*disconnected)(void);
 
-        //定义数据点
+    #ifdef CONFIG_INTOYUN_DATAPOINT
+    //定义数据点
     void (*defineDatapointBool)(const uint16_t dpID, dp_permission_t permission, const bool value);
     void (*defineDatapointNumber)(const uint16_t dpID, dp_permission_t permission, const double minValue, const double maxValue, const int resolution, const double value);
     void (*defineDatapointEnum)(const uint16_t dpID, dp_permission_t permission, const int value);
@@ -82,8 +86,42 @@ typedef struct
     void (*sendDatapointString)(const uint16_t dpID, const char *value);
     void (*sendDatapointBinary)(const uint16_t dpID, const uint8_t *value, uint16_t len);
     void (*sendDatapointAll)(void);
+    #endif
     void (*sendCustomData)(const uint8_t *buffer, uint16_t len);
 }cloud_t;
+
+#ifdef CONFIG_INTOYUN_KEY
+
+typedef struct {
+    void (*init)(void);
+    void (*setParams)(bool invert, uint32_t debounceTime, uint32_t clickTime, uint32_t pressTime);
+    void (*keyRegister)(uint8_t num, cbInitFunc initFunc, cbGetValueFunc getValFunc);
+    void (*attachClick)(uint8_t num, cbClickFunc cbFunc);           //注册单击处理函数
+    void (*attachDoubleClick)(uint8_t num, cbClickFunc cbFunc);     //注册双击处理函数
+    void (*attachLongPressStart)(uint8_t num, cbPressFunc cbFunc);  //注册按下按键处理函数
+    void (*attachLongPressStop)(uint8_t num, cbPressFunc cbFunc);   //注册释放按键处理函数
+    void (*attachDuringLongPress)(uint8_t num, cbPressFunc cbFunc); //注册按键按下回调函数
+    void (*loop)(void);
+}keys_t;
+
+extern const keys_t Key;
+
+#endif
+
+#ifdef CONFIG_INTOYUN_TIMER
+
+typedef struct {
+    void (*timerRegister)(uint8_t num, uint32_t period, bool oneShot, cbTimerFunc cbFunc);
+    void (*changePeriod)(uint8_t num, uint32_t period);
+    void (*start)(uint8_t num);
+    void (*stop)(uint8_t num);
+    void (*reset)(uint8_t num);
+    void (*loop)(void);
+}timers_t;
+
+extern const timers_t Timer;
+
+#endif
 
 void delay(uint32_t ms);
 uint32_t millis(void);

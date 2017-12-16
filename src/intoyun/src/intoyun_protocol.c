@@ -891,7 +891,9 @@ void ProtocolModuleActiveSendHandle(void)
 uint8_t ProtocolParserPlatformData(const uint8_t *buffer, uint16_t len)
 {
     uint8_t customData = 0;
+    #ifdef CONFIG_INTOYUN_DATAPOINT
     intoyunParseReceiveDatapoints(buffer,len,&customData);
+    #endif
     return customData;
 }
 

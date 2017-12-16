@@ -101,7 +101,6 @@ typedef struct {
 }datapoint_control_t;
 
 
-// typedef void (*event_handler_t)(uint8_t eventType, uint8_t param, uint8_t *data, uint32_t len);
 typedef void (*event_handler_t)(system_event_t event, int param, uint8_t *data, uint16_t len);
 
 

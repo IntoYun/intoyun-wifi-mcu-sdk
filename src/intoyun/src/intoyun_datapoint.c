@@ -48,7 +48,9 @@ void intoyunInit(void)
     HAL_SystemInit();
     ProtocolParserInit();
     delay(5);
+    #ifdef CONFIG_INTOYUN_DATAPOINT
     intoyunDefineDatapointBool(DPID_DEFAULT_BOOL_GETALLDATAPOINT, DP_PERMISSION_UP_DOWN, false);     //get all datapoint
+    #endif
 
     if(!ProtocolQueryInfo(&info)){
         return;
@@ -99,9 +101,11 @@ static void intoyunDeviceRegister(void)
 void intoyunLoop(void)
 {
     ProtocolModuleActiveSendHandle();
+    #ifdef CONFIG_INTOYUN_DATAPOINT
     if(intoyunConnected()){
         intoyunSendDatapointAutomatic();
     }
+    #endif
     intoyunDeviceRegister();
 }
 
@@ -240,6 +244,25 @@ bool intoyunDisconnected(void)
     return false;
 }
 
+//发送数据
+static void intoyunTransmitData(const uint8_t *buffer, uint16_t len)
+{
+    ProtocolSendPlatformData(buffer, len);
+}
+
+void intoyunSendCustomData(const uint8_t *buffer, uint16_t len)
+{
+    uint8_t buf[256];
+    uint16_t index = len+1;
+    if(index > 256){
+        index = 256;
+    }
+
+    buf[0] = CUSTOMER_DEFINE_DATA;
+    memcpy(&buf[1],buffer,index-1);
+    intoyunTransmitData(buf,index);
+}
+
 void intoyunDatapointControl(dp_transmit_mode_t mode, uint32_t lapse)
 {
     g_datapoint_control.datapoint_transmit_mode = mode;
@@ -255,6 +278,7 @@ void intoyunDatapointControl(dp_transmit_mode_t mode, uint32_t lapse)
     }
 }
 
+#ifdef CONFIG_INTOYUN_DATAPOINT
 //小数点
 static double _pow(double base, int exponent)
 {
@@ -1219,12 +1243,6 @@ static uint16_t intoyunFormAllDatapoint(uint8_t *buffer, uint16_t len, bool dpFo
     return index;
 }
 
-//发送数据
-static void intoyunTransmitData(const uint8_t *buffer, uint16_t len)
-{
-    ProtocolSendPlatformData(buffer, len);
-}
-
 //发送单个数据点的数据
 static void intoyunSendSingleDatapoint(const uint16_t dpID)
 {
@@ -1262,19 +1280,6 @@ static void intoyunSendDatapointAll(bool dpForm)
     log_v_dump(buffer,len);
 
     intoyunTransmitData(buffer,len);
-}
-
-void intoyunSendCustomData(const uint8_t *buffer, uint16_t len)
-{
-    uint8_t buf[256];
-    uint16_t index = len+1;
-    if(index > 256){
-        index = 256;
-    }
-
-    buf[0] = CUSTOMER_DEFINE_DATA;
-    memcpy(&buf[1],buffer,index-1);
-    intoyunTransmitData(buf,index);
 }
 
 void intoyunSendAllDatapointManual(void)
@@ -1335,3 +1340,5 @@ void intoyunSendDatapointAutomatic(void)
         intoyunPropertyChangeClear();
     }
 }
+
+#endif

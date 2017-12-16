@@ -439,6 +439,16 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\src\intoyun\src\intoyun_protocol.c</FilePath>
             </File>
+            <File>
+              <FileName>intoyun_key.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\src\intoyun\src\intoyun_key.c</FilePath>
+            </File>
+            <File>
+              <FileName>intoyun_timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\src\intoyun\src\intoyun_timer.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
