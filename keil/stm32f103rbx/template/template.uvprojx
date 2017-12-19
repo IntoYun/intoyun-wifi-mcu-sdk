@@ -399,6 +399,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\src\apps\template\stm32f103rbx\src\system_stm32f1xx.c</FilePath>
             </File>
+            <File>
+              <FileName>user_interface.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\src\apps\template\stm32f103rbx\src\user_interface.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

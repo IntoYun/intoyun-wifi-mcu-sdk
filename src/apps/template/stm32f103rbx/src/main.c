@@ -8,6 +8,7 @@
 
 #include "project_config.h"
 #include "intoyun_interface.h"
+#include "user_interface.h"
 
 #define DPID_ENUM_LIGHT_MODE             1    //颜色模式
 #define DPID_NUMBER_TEMPERATURE          2    //温度
@@ -64,6 +65,8 @@ void system_event_callback(system_event_t event, int param, uint8_t *data, uint1
             case ep_cloud_status_disconnected:  //模组已断开平台
                 break;
             case ep_cloud_status_connected:     //模组已连接平台
+                Timer.stop(LED_TIMER_NUM);
+                LedControl(true);
                 break;
             default:
                 break;
@@ -73,6 +76,7 @@ void system_event_callback(system_event_t event, int param, uint8_t *data, uint1
             case ep_mode_normal:          //模组已处于正常工作模式
                 break;
             case ep_mode_imlink_config:   //模组已处于imlink配置模式
+                Timer.start(LED_TIMER_NUM);
                 break;
             case ep_mode_ap_config:       //模组已处于ap配置模式
                 break;

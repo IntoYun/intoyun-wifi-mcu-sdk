@@ -1,5 +1,7 @@
 #include "intoyun_interface.h"
+#include "user_interface.h"
 #include "stm32f1xx_hal.h"
+#include "project_config.h"
 
 #define PRODUCT_ID                       "QRGro2Xk9P4c42eb"//产品ID
 #define PRODUCT_SECRET                   "606b833b5879b55498f89f03d95f6e29"//产品秘钥
@@ -7,11 +9,10 @@
 #define SOFTWARE_VERSION                 "V1.0.0"          //软件版本号
 
 
-#define LED_PIN             GPIO_PIN_0
-#define LED_GPIO_PORT       GPIOB
-#define LED_ON	 	          HAL_GPIO_WritePin(LED_GPIO_PORT,LED_PIN, GPIO_PIN_RESET)
-#define LED_OFF		          HAL_GPIO_WritePin(LED_GPIO_PORT,LED_PIN, GPIO_PIN_SET)
-#define LED_TOG		          HAL_GPIO_TogglePin(LED_GPIO_PORT,LED_PIN)
+#define LED_PIN_DEF               GPIO_PIN_1
+#define LED_GPIO_PORT_DEF         GPIOB
+#define LED_ON_EN                 HAL_GPIO_WritePin(LED_GPIO_PORT,LED_PIN, GPIO_PIN_RESET)
+#define LED_OFF_EN                HAL_GPIO_WritePin(LED_GPIO_PORT,LED_PIN, GPIO_PIN_SET)
 
 
 #define DPID_ENUM_LIGHT_MODE             1    //颜色模式
@@ -36,47 +37,19 @@ void LED_Init(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct;
     __GPIOB_CLK_ENABLE();
-    GPIO_InitStruct.Pin = LED_PIN;
+    GPIO_InitStruct.Pin = LED_PIN_DEF;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
     HAL_GPIO_Init(LED_GPIO_PORT, &GPIO_InitStruct);
-    HAL_GPIO_WritePin(LED_GPIO_PORT, LED_PIN, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED_GPIO_PORT_DEF, LED_PIN, GPIO_PIN_RESET);
 }
 
-#if 0
-void userInit(void)
-{
-    LED_Init();
-    //添加数据点定义
-    Cloud.defineDatapointEnum(DPID_ENUM_LIGHT_MODE, DP_PERMISSION_UP_DOWN, 2);                         //颜色模式
-    Cloud.defineDatapointNumber(DPID_NUMBER_TEMPERATURE, DP_PERMISSION_UP_ONLY, -100, 100, 2, 22.34);  //温度
-    Cloud.defineDatapointBool(DPID_BOOL_SWITCH, DP_PERMISSION_UP_DOWN, false);                         //灯泡开关
-    Cloud.defineDatapointBool(DPID_BOOL_LIGHT_STATUS, DP_PERMISSION_UP_ONLY, false);                   //灯泡状态
-    Cloud.defineDatapointNumber(DPID_NUMBER_SPEED, DP_PERMISSION_UP_DOWN, 0, 1000, 0, 55);         //速度
-    /* Cloud.defineDatapointString(DPID_STRING_LCD_DISPLAY, DP_PERMISSION_UP_DOWN, "hello world!!!");     //字符显示 */
-    Cloud.defineDatapointString(DPID_STRING_LCD_DISPLAY, DP_PERMISSION_UP_DOWN, dpStringLcdDisplay);     //字符显示
-    Cloud.defineDatapointBinary(DPID_BINARY, DP_PERMISSION_UP_DOWN, dpBinaryVal,9);                    //二进制数据
-}
-
-void userHandle(void)
-{
-    //处理需要上送到云平台的数据
-    Cloud.writeDatapointNumberInt32(DPID_NUMBER_SPEED, dpNumberSpeed);
-    Cloud.writeDatapointNumberDouble(DPID_NUMBER_TEMPERATURE, dpNumberTemperature);
-    Cloud.writeDatapointEnum(DPID_ENUM_LIGHT_MODE,dpEnumLightMode);
-    Cloud.writeDatapointString(DPID_STRING_LCD_DISPLAY,dpStringLcdDisplay);
-    Cloud.writeDatapointBinary(DPID_BINARY,dpBinaryVal,9);
-}
-#endif
-
-
-void eventProcess(system_event_t event, int param, uint8_t *data, uint16_t len)
+void system_event_callback(system_event_t event, int param, uint8_t *data, uint16_t len)
 {
     if(event == event_cloud_data){
         switch(param){
         case ep_cloud_data_datapoint: //处理平台数据
-            #if 0
             //灯泡控制
             if (RESULT_DATAPOINT_NEW == Cloud.readDatapointBool(DPID_BOOL_SWITCH, &dpBoolLightSwitch)){
                 log_v("switch value = %d\r\n",dpBoolLightSwitch);
@@ -113,7 +86,6 @@ void eventProcess(system_event_t event, int param, uint8_t *data, uint16_t len)
                 log_v("dpBinaryVal\r\n");
                 log_v_dump(dpBinaryVal,binaryLen);
             }
-            #endif
 
             break;
         case ep_cloud_data_custom: //接受到透传数据
@@ -158,21 +130,42 @@ void eventProcess(system_event_t event, int param, uint8_t *data, uint16_t len)
     }
 }
 
+void userInit(void)
+{
+    LED_Init();
+    //添加数据点定义
+    Cloud.defineDatapointEnum(DPID_ENUM_LIGHT_MODE, DP_PERMISSION_UP_DOWN, 2);                         //颜色模式
+    Cloud.defineDatapointNumber(DPID_NUMBER_TEMPERATURE, DP_PERMISSION_UP_ONLY, -100, 100, 2, 22.34);  //温度
+    Cloud.defineDatapointBool(DPID_BOOL_SWITCH, DP_PERMISSION_UP_DOWN, false);                         //灯泡开关
+    Cloud.defineDatapointBool(DPID_BOOL_LIGHT_STATUS, DP_PERMISSION_UP_ONLY, false);                   //灯泡状态
+    Cloud.defineDatapointNumber(DPID_NUMBER_SPEED, DP_PERMISSION_UP_DOWN, 0, 1000, 0, 55);         //速度
+    Cloud.defineDatapointString(DPID_STRING_LCD_DISPLAY, DP_PERMISSION_UP_DOWN, dpStringLcdDisplay);     //字符显示
+    Cloud.defineDatapointBinary(DPID_BINARY, DP_PERMISSION_UP_DOWN, dpBinaryVal,9);                    //二进制数据
+    System.setEventCallback(system_event_callback);
+    System.setDeviceInfo(PRODUCT_ID_DEF,PRODUCT_SECRET_DEF, HARDWARE_VERSION_DEF,SOFTWARE_VERSION_DEF);
+    Cloud.connect();
+}
+
+void userHandle(void)
+{
+    if(Cloud.connected()){
+        //处理需要上送到云平台的数据
+        Cloud.writeDatapointNumberInt32(DPID_NUMBER_SPEED, dpNumberSpeed);
+        Cloud.writeDatapointNumberDouble(DPID_NUMBER_TEMPERATURE, dpNumberTemperature);
+        Cloud.writeDatapointEnum(DPID_ENUM_LIGHT_MODE,dpEnumLightMode);
+        Cloud.writeDatapointString(DPID_STRING_LCD_DISPLAY,dpStringLcdDisplay);
+        Cloud.writeDatapointBinary(DPID_BINARY,dpBinaryVal,9);
+    }
+}
+
+
 int main(void)
 {
     System.init();
-    log_v("wifi mcu slave\r\n");
-    /* userInit(); */
-    delay(200);
-    System.setEventCallback(eventProcess);
-    System.setDeviceInfo(PRODUCT_ID,PRODUCT_SECRET, HARDWARE_VERSION,SOFTWARE_VERSION);
-    Cloud.connect();
-
+    userInit();
     while(1)
     {
         System.loop();
-        /* if(Cloud.connected()){ */
-        /*     userHandle(); */
-        /* } */
+        userHandle();
     }
 }

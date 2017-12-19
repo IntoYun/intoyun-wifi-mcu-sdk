@@ -41,6 +41,7 @@
 #include "stm32f1xx_it.h"
 #include "stm32f1xx_hal.h"
 #include "intoyun_interface.h"
+#include "user_interface.h"
 
 extern UART_HandleTypeDef huart1; //USART1用于与模组通讯
 
@@ -139,6 +140,7 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
+    userInterfaceLoop();
     HAL_IncTick();
 }
 
