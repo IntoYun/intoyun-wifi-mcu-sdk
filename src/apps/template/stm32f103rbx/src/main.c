@@ -57,40 +57,43 @@ void system_event_callback(system_event_t event, int param, uint8_t *data, uint1
             break;
         }
     }else if(event == event_network_status){
-            switch(param){
-            case ep_network_status_disconnected:  //模组已断开路由器
-                break;
-            case ep_network_status_connected:     //模组已连接路由器
-                break;
-            case ep_cloud_status_disconnected:  //模组已断开平台
-                break;
-            case ep_cloud_status_connected:     //模组已连接平台
-                Timer.stop(LED_TIMER_NUM);
-                LedControl(true);
-                break;
-            default:
-                break;
-            }
+        switch(param){
+        case ep_network_status_disconnected:  //模组已断开路由器
+            break;
+        case ep_network_status_connected:     //模组已连接路由器
+            break;
+        case ep_cloud_status_disconnected:  //模组已断开平台
+            break;
+        case ep_cloud_status_connected:     //模组已连接平台
+            Timer.stop(LED_TIMER_NUM);
+            LedControl(true);
+            break;
+        default:
+            break;
+        }
     }else if(event == event_mode_changed){
-            switch(param){
-            case ep_mode_normal:          //模组已处于正常工作模式
-                break;
-            case ep_mode_imlink_config:   //模组已处于imlink配置模式
-                Timer.start(LED_TIMER_NUM);
-                break;
-            case ep_mode_ap_config:       //模组已处于ap配置模式
-                break;
-            case ep_mode_binding:         //模组已处于绑定模式
-                break;
-            default:
-                break;
-            }
+        switch(param){
+        case ep_mode_normal:          //模组已处于正常工作模式
+            log_v("module mode is normal\r\n");
+            break;
+        case ep_mode_imlink_config:   //模组已处于imlink配置模式
+            log_v("module mode is imlink config\r\n");
+            break;
+        case ep_mode_ap_config:       //模组已处于ap配置模式
+            break;
+        case ep_mode_binding:         //模组已处于绑定模式
+            break;
+        default:
+            break;
+        }
     }
 }
 
 
 void userInit(void)
 {
+    System.setEventCallback(system_event_callback);
+    userInterfaceInit();
     Cloud.defineDatapointEnum(DPID_ENUM_LIGHT_MODE, DP_PERMISSION_UP_DOWN, 2);                         //颜色模式
     Cloud.defineDatapointNumber(DPID_NUMBER_TEMPERATURE, DP_PERMISSION_UP_ONLY, -100, 100, 2, 22.34);  //温度
     Cloud.defineDatapointBool(DPID_BOOL_SWITCH, DP_PERMISSION_UP_DOWN, false);                         //灯泡开关
@@ -98,8 +101,6 @@ void userInit(void)
     Cloud.defineDatapointNumber(DPID_NUMBER_SPEED, DP_PERMISSION_UP_DOWN, 0, 1000, 0, 55);         //速度
     Cloud.defineDatapointString(DPID_STRING_LCD_DISPLAY, DP_PERMISSION_UP_DOWN, dpStringLcdDisplay);     //字符显示
     Cloud.defineDatapointBinary(DPID_BINARY, DP_PERMISSION_UP_DOWN, dpBinaryVal,9);                    //二进制数据
-    delay(200);
-    System.setEventCallback(system_event_callback);
     System.setDeviceInfo(PRODUCT_ID_DEF,PRODUCT_SECRET_DEF, HARDWARE_VERSION_DEF,SOFTWARE_VERSION_DEF);
     Cloud.connect();
 }

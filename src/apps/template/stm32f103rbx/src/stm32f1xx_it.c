@@ -140,8 +140,8 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-    userInterfaceLoop();
     HAL_IncTick();
+    userInterfaceLoop();
 }
 
 void USART1_IRQHandler(void)

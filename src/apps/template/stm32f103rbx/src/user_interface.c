@@ -3,6 +3,7 @@
 #include "stm32f1xx_hal.h"
 
 static bool ledFlag = false;
+static bool onceSet = false;
 
 void LedBlink(void)
 {
@@ -70,9 +71,14 @@ void KeyLongPressHandle(uint32_t ms)
     }
     else if(ms >= 3000)
     {
-        log_v("key is long press 3s\r\n");
-        //模组进入配置模式
-        System.setModuleMode(MODE_IMLINK_CONFIG, 0);
+        if(!onceSet)
+        {
+            onceSet = true;
+            log_v("key is long press 3s\r\n");
+            //模组进入配置模式
+            Timer.start(LED_TIMER_NUM);
+            System.setModuleMode(MODE_IMLINK_CONFIG, 0);
+        }
     }
 }
 
