@@ -20,7 +20,7 @@
 #ifndef INTOYUN_CONFIG_H_
 #define INTOYUN_CONFIG_H_
 
-#define SDK_VERSION                               "1.0.0"
+#define SDK_VERSION                               "1.1.0"
 
 #define INTOYUN_DEBUG_LEVEL                       5 //调试信息输出等级
 #define PROPERTIES_MAX                            50 //数据点个数大小
