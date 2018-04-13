@@ -5,11 +5,11 @@
 .DS_Store
 
 #项目临时工程
-Objects
 DebugConfig
 Listings
+Objects
 RTE
-*.lz
+*.uvguix.*
 *.scvd
 
 # gtags相关文件
