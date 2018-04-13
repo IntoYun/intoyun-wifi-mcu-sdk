@@ -5,27 +5,16 @@
 .DS_Store
 
 #项目临时工程
-target/
+Objects
+DebugConfig
+Listings
+RTE
+*.lz
+*.scvd
 
 # gtags相关文件
 GPATH
 GRTAGS
 GTAGS
 ctags
-
-# Objects 文件夹
-keil/stm32f103rbx/smartLight/Objects/*
-keil/stm32f103rbx/smartLight/DebugConfig/*
-keil/stm32f103rbx/smartLight/Listings/*
-keil/stm32f103rbx/smartLight/RTE/*
-keil/stm32f103rbx/smartLight/*.scvd
-keil/stm32f103rbx/smartLight/*.lz
-
-keil/stm32f103rbx/template/Objects/*
-keil/stm32f103rbx/template/DebugConfig/*
-keil/stm32f103rbx/template/Listings/*
-keil/stm32f103rbx/template/RTE/*
-keil/stm32f103rbx/template/*.scvd
-keil/stm32f103rbx/template/*.lz
-
 
