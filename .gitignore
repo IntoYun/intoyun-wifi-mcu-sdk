@@ -1,3 +1,18 @@
+# 平台相关隐藏文件
+.settings/*
+.cproject
+.project
+.DS_Store
+
+#项目临时工程
+target/
+
+# gtags相关文件
+GPATH
+GRTAGS
+GTAGS
+ctags
+
 # Objects 文件夹
 keil/stm32f103rbx/smartLight/Objects/*
 keil/stm32f103rbx/smartLight/DebugConfig/*
@@ -14,10 +29,3 @@ keil/stm32f103rbx/template/*.scvd
 keil/stm32f103rbx/template/*.lz
 
 
-# gtags相关文件
-GPATH
-GRTAGS
-GTAGS
-
-# tags
-tags

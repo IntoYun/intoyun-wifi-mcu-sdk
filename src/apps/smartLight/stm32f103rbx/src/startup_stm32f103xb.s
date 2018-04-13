@@ -3,7 +3,7 @@
 ;* Author             : MCD Application Team
 ;* Version            : V1.4.0
 ;* Date               : 29-April-2016
-;* Description        : STM32F103xB Devices vector table for MDK-ARM toolchain. 
+;* Description        : STM32F103xB Devices vector table for MDK-ARM toolchain.
 ;*                      This module performs:
 ;*                      - Set the initial SP
 ;*                      - Set the initial PC == Reset_Handler
@@ -38,7 +38,7 @@
 ;* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 ;* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 ;* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-; 
+;
 ;*******************************************************************************
 
 ; Amount of memory (in bytes) allocated for Stack
@@ -296,17 +296,17 @@ USBWakeUp_IRQHandler
 ;*******************************************************************************
 ; User Stack and Heap initialization
 ;*******************************************************************************
-                 IF      :DEF:__MICROLIB           
-                
+                 IF      :DEF:__MICROLIB
+
                  EXPORT  __initial_sp
                  EXPORT  __heap_base
                  EXPORT  __heap_limit
-                
+
                  ELSE
-                
+
                  IMPORT  __use_two_region_memory
                  EXPORT  __user_initial_stackheap
-                 
+
 __user_initial_stackheap
 
                  LDR     R0, =  Heap_Mem
