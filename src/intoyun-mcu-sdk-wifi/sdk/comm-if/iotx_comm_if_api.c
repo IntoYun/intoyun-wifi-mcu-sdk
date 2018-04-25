@@ -22,46 +22,41 @@
 #include "iotx_datapoint_api.h"
 
 static int iotx_conninfo_inited = 0;
-static iotx_conn_info_t iotx_conn_info;
-
-iotx_conn_info_pt iotx_conn_info_get(void)
-{
-    IOT_Comm_Init();
-    return &iotx_conn_info;
-}
+static iotx_conn_state_t iotx_conn_state = IOTX_CONN_STATE_INITIALIZED;
 
 /* get state of conn */
-static iotx_conn_state_t iotx_get_conn_state(void)
+iotx_conn_state_t iotx_get_conn_state(void)
 {
-    iotx_conn_info_pt pconn_info = iotx_conn_info_get();
-    iotx_conn_state_t state;
-
-    state = pconn_info->conn_state;
-    return state;
+    return iotx_conn_state;
 }
 
 /* set state of conn */
-static void iotx_set_conn_state(iotx_conn_state_t newState)
+void iotx_set_conn_state(iotx_conn_state_t newState)
 {
-    iotx_conn_info_pt pconn_info = iotx_conn_info_get();
+    iotx_conn_state_t oldState = iotx_get_conn_state();
 
-    if(pconn_info->conn_state != newState) {
+    if(oldState != newState) {
         switch(newState) {
             case IOTX_CONN_STATE_INITIALIZED:    /* initializing state */
-            case IOTX_CONN_STATE_DISCONNECTED:   /* disconnected state */
-                if(pconn_info->conn_state == IOTX_CONN_STATE_CONNECTED) {
-                    IOT_SYSTEM_NotifyEvent(event_network_status, ep_cloud_status_disconnected, NULL, 0);
+            case IOTX_CONN_STATE_NETWORK_DISCONNECTED:   /* disconnected state */
+                if(oldState > IOTX_CONN_STATE_NETWORK_DISCONNECTED) {
+                    IOT_SYSTEM_NotifyEvent(event_network_status, ep_network_status_disconnected, NULL, 0);
                 }
                 break;
-            case IOTX_CONN_STATE_CONNECTED:      /* connected state */
-                IOT_SYSTEM_NotifyEvent(event_network_status, ep_cloud_status_connected, NULL, 0);
+            case IOTX_CONN_STATE_NETWORK_CONNECTED:      /* connected state */
+                IOT_SYSTEM_NotifyEvent(event_network_status, ep_network_status_connected, NULL, 0);
+                break;
+            case IOTX_CONN_STATE_CLOUD_DISCONNECTED:      /* connected state */
+                IOT_SYSTEM_NotifyEvent(event_cloud_status, ep_cloud_status_connected, NULL, 0);
+                break;
+            case IOTX_CONN_STATE_CLOUD_CONNECTED:      /* connected state */
+                IOT_SYSTEM_NotifyEvent(event_cloud_status, ep_cloud_status_connected, NULL, 0);
                 break;
             default:
                 break;
         }
     }
-
-    pconn_info->conn_state = newState;
+    iotx_conn_state = newState;
 }
 
 static void cloud_data_receive_callback(uint8_t *data, uint32_t len)
@@ -76,13 +71,10 @@ static void cloud_data_receive_callback(uint8_t *data, uint32_t len)
 int IOT_Comm_Init(void)
 {
     if (iotx_conninfo_inited) {
-        //log_debug("conninfo already created, return!");
         return 0;
     }
-    memset(&iotx_conn_info, 0x0, sizeof(iotx_conn_info_t));
 
     IOT_Protocol_SetRevCallback(cloud_data_receive_callback);
-
 #if CONFIG_CLOUD_DATAPOINT_ENABLED == 1
     // 添加默认数据点
     IOT_DataPoint_DefineBool(DPID_DEFAULT_BOOL_RESET, DP_PERMISSION_UP_DOWN, false);               //reboot
@@ -90,7 +82,6 @@ int IOT_Comm_Init(void)
 #endif
 
     iotx_conninfo_inited = 1;
-    log_i("conn_info created successfully!");
     return 0;
 }
 
@@ -102,24 +93,10 @@ int IOT_Comm_Connect(void)
 
 bool IOT_Comm_IsConnected(void)
 {
-#if 0
-    if(!IOT_Network_IsConnected()) {
-        return false;
+    if(IOTX_CONN_STATE_CLOUD_CONNECTED == iotx_get_conn_state()) {
+        return true;
     }
-
-    if(IOTX_CONN_STATE_CONNECTED != iotx_get_conn_state()) {
-        return false;
-    }
-
-    bool rst = iotx_comm_isconnected();
-    if(rst) {
-        iotx_set_conn_state(IOTX_CONN_STATE_CONNECTED);
-    } else {
-        iotx_set_conn_state(IOTX_CONN_STATE_DISCONNECTED);
-    }
-    return rst;
-#endif
-    return true;
+    return false;
 }
 
 int IOT_Comm_Disconnect(void)

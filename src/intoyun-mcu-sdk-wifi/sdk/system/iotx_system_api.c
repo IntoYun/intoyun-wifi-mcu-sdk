@@ -21,6 +21,36 @@
 #include "iotx_protocol_api.h"
 
 static event_handler_t eventHandler = NULL;
+static iotx_work_mode_t iotx_work_mode = IOTX_WORK_MODE_NORMAL;
+
+/* get type of mode */
+iotx_work_mode_t iotx_get_work_mode(void)
+{
+    return iotx_work_mode;
+}
+
+void iotx_set_work_mode(iotx_work_mode_t newMode)
+{
+    if(iotx_get_work_mode() != newMode) {
+        switch(newMode) {
+            case IOTX_WORK_MODE_NORMAL:
+                IOT_SYSTEM_NotifyEvent(event_mode_changed, ep_mode_normal, NULL, 0);
+                break;
+            case IOTX_WORK_MODE_IMLINK_CONFIG:
+                IOT_SYSTEM_NotifyEvent(event_mode_changed, ep_mode_imlink_config, NULL, 0);
+                break;
+            case IOTX_WORK_MODE_AP_CONFIG:
+                IOT_SYSTEM_NotifyEvent(event_mode_changed, ep_mode_ap_config, NULL, 0);
+                break;
+            case IOTX_WORK_MODE_BINDING:
+                IOT_SYSTEM_NotifyEvent(event_mode_changed, ep_mode_binding, NULL, 0);
+                break;
+            default:
+                break;
+        }
+    }
+    iotx_work_mode = newMode;
+}
 
 void IOT_SYSTEM_SetDeviceInfo(char *productID, char *productSecret, char *hardwareVersion, char *softwareVersion)
 {
@@ -69,14 +99,14 @@ void IOT_SYSTEM_NotifyEvent(iotx_system_event_t event, iotx_system_events_param_
     }
 }
 
-bool IOT_SYSTEM_SetMode(mode_type_t mode, uint32_t timeout)
+bool IOT_SYSTEM_SetMode(iotx_work_mode_t mode, uint32_t timeout)
 {
     return IOT_Protocol_SetMode((uint8_t)mode,timeout);
 }
 
-mode_type_t IOT_SYSTEM_GetMode(void)
+iotx_work_mode_t IOT_SYSTEM_GetMode(void)
 {
-    return (mode_type_t)IOT_Protocol_QueryMode();
+    return (iotx_work_mode_t)IOT_Protocol_QueryMode();
 }
 
 bool IOT_SYSTEM_Restart(void)

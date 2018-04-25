@@ -34,8 +34,8 @@ typedef struct
     void (*loop)(void);
     //应用操作接口
     void (*setEventCallback)(event_handler_t handler);
-    bool (*setModuleMode)(mode_type_t mode, uint32_t timeout);
-    mode_type_t (*getModuleMode)(void);
+    bool (*setModuleMode)(iotx_work_mode_t mode, uint32_t timeout);
+    iotx_work_mode_t (*getModuleMode)(void);
     void (*setDeviceInfo)(char *productId, char *productSecret, char *hardVer, char *softVer);     //设置设备信息
     void (*getModuleInfo)(char *moduleVersion, char *moduleType, char *deviceId, uint8_t *atMode); //获取模块信息
     bool (*resetModule)(void);

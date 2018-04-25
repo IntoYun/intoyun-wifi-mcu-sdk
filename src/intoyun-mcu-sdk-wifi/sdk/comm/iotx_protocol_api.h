@@ -48,15 +48,6 @@ typedef enum
     MODULE_CONNECT_SERVER,         //已连接路由并连接服务器
 } module_status_type_t;
 
-/** WiFi模组工作模式*/
-typedef enum
-{
-    MODE_NORMAL = 1,        //正常工作模式
-    MODE_IMLINK_CONFIG,     //ImLink配置模式
-    MODE_AP_CONFIG,         //为AP配置模式
-    MODE_BINDING,           //绑定模式
-} mode_type_t;
-
 typedef enum {
     WIFIMODE_STATION            = 1,
     WIFIMODE_SOFTAP             = 2,

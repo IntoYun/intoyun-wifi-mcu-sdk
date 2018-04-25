@@ -28,16 +28,14 @@ extern "C"
 typedef enum {
     IOTX_CONN_STATE_INVALID = 0,                    /* in invalid state */
     IOTX_CONN_STATE_INITIALIZED = 1,                /* in initializing state */
-    IOTX_CONN_STATE_CONNECTED = 2,                  /* in connected state */
-    IOTX_CONN_STATE_DISCONNECTED = 3,               /* in disconnected state */
-    IOTX_CONN_STATE_DISCONNECTED_RECONNECTING = 4,  /* in reconnecting state */
+    IOTX_CONN_STATE_NETWORK_CONNECTED = 2,          /* in network connected state */
+    IOTX_CONN_STATE_NETWORK_DISCONNECTED = 3,       /* in network disconnected state */
+    IOTX_CONN_STATE_CLOUD_CONNECTED = 4,            /* in cloud connected state */
+    IOTX_CONN_STATE_CLOUD_DISCONNECTED = 5,         /* in cloud disconnected state */
 } iotx_conn_state_t;
 
-typedef struct {
-    iotx_conn_state_t conn_state;
-} iotx_conn_info_t, *iotx_conn_info_pt;
-
-iotx_conn_info_pt iotx_conn_info_get(void);
+iotx_conn_state_t iotx_get_conn_state(void);
+void iotx_set_conn_state(iotx_conn_state_t newState);
 
 int IOT_Comm_Init(void);
 int IOT_Comm_Connect(void);

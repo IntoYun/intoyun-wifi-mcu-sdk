@@ -20,6 +20,7 @@
 #include "iotx_protocol_api.h"
 #include "iotx_datapoint_api.h"
 #include "iotx_system_api.h"
+#include "iotx_comm_if_api.h"
 
 #define MAX_SIZE        512  //!< max expected messages (used with RX)
 
@@ -369,65 +370,41 @@ static int ProtocolParserWaitFinalResp(callbackPtr cb, void* param, uint32_t tim
                 const char* cmd = buf+1;
                 log_v("cmd = %s\r\n",cmd);
                 int a,b,c,d;
-                int modeEventParam;
-                int networkEventParam;
                 int event;
+                iotx_conn_state_t conn_state;
                 wifi_info_t wifi;
                 uint16_t platformDataLen;
                 uint8_t *platformData;
 
                 //+RECMODE:<event>
-                if(sscanf(cmd,"RECMODE:%d\r\n",(int*)&event) == 1) {
-                    switch(event) {
-                        case 1:
-                            modeEventParam = ep_mode_normal;
-                            break;
-                        case 2:
-                            modeEventParam = ep_mode_imlink_config;
-                            break;
-                        case 3:
-                            modeEventParam = ep_mode_ap_config;
-                            break;
-                        case 4:
-                            modeEventParam = ep_mode_binding;
-                            break;
-                        default:
-                            break;
-                    }
-                    /*
-                    eventHandler(event_mode_changed,modeEventParam,NULL,0);
-                    */
+                if(sscanf(cmd, "RECMODE:%d\r\n", (int*)&event) == 1) {
+                    iotx_set_work_mode((iotx_work_mode_t)event);
                 }
                 //+RECNET:<event>,[<ssid>,<ip>,<rssi>]
-                else if(sscanf(cmd,"RECNET:%d",(int*)&event) == 1) {
+                else if(sscanf(cmd, "RECNET:%d", (int*)&event) == 1) {
                     switch(event) {
-                        case 1:
-                            networkEventParam = ep_network_status_disconnected;
-                            //moduleConnectNetwork = false;
+                        case 1: //断开路由器
+                            conn_state = IOTX_CONN_STATE_NETWORK_DISCONNECTED;
                             break;
-                        case 2:
-                            networkEventParam = ep_network_status_connected;
-                            //moduleConnectNetwork = true;
+                        case 2: //连接路由器
+                            conn_state = IOTX_CONN_STATE_NETWORK_CONNECTED;
                             break;
-                        case 3:
-                            networkEventParam = ep_cloud_status_disconnected;
-                            //cloudConnected = false;
+                        case 3: //断开服务器
+                            conn_state = IOTX_CONN_STATE_CLOUD_DISCONNECTED;
                             break;
-                        case 4:
-                            networkEventParam = ep_cloud_status_connected;
-                            //cloudConnected = true;
+                        case 4: //连接服务器
+                            conn_state = IOTX_CONN_STATE_CLOUD_CONNECTED;
                             break;
                         default:
                             break;
                     }
-                    if(networkEventParam > 1) {
-                        if(sscanf(cmd,"RECNET:%d,\"%[^\"]\",\""IPSTR"\",%d\r\n",(int*)&networkEventParam,wifi.ssid,(int*)&a,(int*)&b,(int*)&c,(int*)&d,(int*)&wifi.rssi) == 7){
+                    if(event > 1) {
+                        if(sscanf(cmd,"RECNET:%d,\"%[^\"]\",\""IPSTR"\",%d\r\n", (int*)&event, \
+                                wifi.ssid, (int*)&a, (int*)&b, (int*)&c, (int*)&d, (int*)&wifi.rssi) == 7) {
                             wifi.ipAddr = IPADR(a,b,c,d);
                         }
                     }
-                    /*
-                    eventHandler(event_network_status,networkEventParam,NULL,0);
-                    */
+                    iotx_set_conn_state(conn_state);
                 }
                 //+RECDATA,<len>:<data>
                 else if(sscanf(cmd, "RECDATA,%d", (int*)&platformDataLen) == 1) {

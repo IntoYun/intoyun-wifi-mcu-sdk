@@ -55,14 +55,25 @@ typedef enum {
 
 typedef void (*event_handler_t)(int event, int param, uint8_t *data, uint32_t len);
 
+typedef enum
+{
+    IOTX_WORK_MODE_NORMAL = 1,        //正常工作模式
+    IOTX_WORK_MODE_IMLINK_CONFIG,     //ImLink配置模式
+    IOTX_WORK_MODE_AP_CONFIG,         //为AP配置模式
+    IOTX_WORK_MODE_BINDING,           //绑定模式
+} iotx_work_mode_t;
+
+iotx_work_mode_t iotx_get_work_mode(void);
+void iotx_set_work_mode(iotx_work_mode_t newMode);
+
 void IOT_SYSTEM_SetDeviceInfo(char *productID, char *productSecret, char *hardwareVersion, char *softwareVersion);
 void IOT_SYSTEM_GetModuleInfo(char *moduleVersion, char *moduleType, char *deviceId, uint8_t *at_mode);
 void IOT_SYSTEM_Init(void);
 void IOT_SYSTEM_Loop(void);
 void IOT_SYSTEM_SetEventCallback(event_handler_t handler);
 void IOT_SYSTEM_NotifyEvent(iotx_system_event_t event, iotx_system_events_param_t param, uint8_t *data, uint32_t len);
-bool IOT_SYSTEM_SetMode(mode_type_t mode, uint32_t timeout);
-mode_type_t IOT_SYSTEM_GetMode(void);
+bool IOT_SYSTEM_SetMode(iotx_work_mode_t mode, uint32_t timeout);
+iotx_work_mode_t IOT_SYSTEM_GetMode(void);
 bool IOT_SYSTEM_Restart(void);
 bool IOT_SYSTEM_Restore(void);
 void IOT_SYSTEM_PutPipe(uint8_t value);
