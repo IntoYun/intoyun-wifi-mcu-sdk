@@ -22,7 +22,7 @@
   </DaveTm>
 
   <Target>
-    <TargetName>template</TargetName>
+    <TargetName>project</TargetName>
     <ToolsetNumber>0x4</ToolsetNumber>
     <ToolsetName>ARM-ADS</ToolsetName>
     <TargetOption>
@@ -117,31 +117,6 @@
       <TargetDriverDllRegistry>
         <SetRegEntry>
           <Number>0</Number>
-          <Key>ARMRTXEVENTFLAGS</Key>
-          <Name>-L70 -Z18 -C0 -M0 -T1</Name>
-        </SetRegEntry>
-        <SetRegEntry>
-          <Number>0</Number>
-          <Key>DLGTARM</Key>
-          <Name>(1010=-1,-1,-1,-1,0)(1007=-1,-1,-1,-1,0)(1008=-1,-1,-1,-1,0)(1009=-1,-1,-1,-1,0)</Name>
-        </SetRegEntry>
-        <SetRegEntry>
-          <Number>0</Number>
-          <Key>ARMDBGFLAGS</Key>
-          <Name></Name>
-        </SetRegEntry>
-        <SetRegEntry>
-          <Number>0</Number>
-          <Key>DLGUARM</Key>
-          <Name>(105=-1,-1,-1,-1,0)</Name>
-        </SetRegEntry>
-        <SetRegEntry>
-          <Number>0</Number>
-          <Key>ST-LINKIII-KEIL_SWO</Key>
-          <Name>-U303030303030303030303031 -O8398 -S0 -C0 -A0 -N00("ARM CoreSight SW-DP") -D00(1BA01477) -L00(0) -TO18 -TC10000000 -TP21 -TDS8007 -TDT0 -TDC1F -TIEFFFFFFFF -TIP8 -FO7 -FD20000000 -FC1000 -FN1 -FF0STM32F10x_128.FLM -FS08000000 -FL020000 -FP0($$Device:STM32F103RB$Flash\STM32F10x_128.FLM)</Name>
-        </SetRegEntry>
-        <SetRegEntry>
-          <Number>0</Number>
           <Key>UL2CM3</Key>
           <Name>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F10x_128 -FS08000000 -FL020000 -FP0($$Device:STM32F103RB$Flash\STM32F10x_128.FLM))</Name>
         </SetRegEntry>
@@ -153,12 +128,12 @@
       <DebugFlag>
         <trace>0</trace>
         <periodic>1</periodic>
-        <aLwin>1</aLwin>
+        <aLwin>0</aLwin>
         <aCover>0</aCover>
         <aSer1>0</aSer1>
         <aSer2>0</aSer2>
         <aPa>0</aPa>
-        <viewmode>1</viewmode>
+        <viewmode>0</viewmode>
         <vrSel>0</vrSel>
         <aSym>0</aSym>
         <aTbox>0</aTbox>
@@ -196,7 +171,7 @@
 
   <Group>
     <GroupName>apps</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -207,7 +182,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\apps\template\stm32f103rbx\src\main.c</PathWithFileName>
+      <PathWithFileName>..\..\src\apps\src\main.c</PathWithFileName>
       <FilenameWithoutPath>main.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -219,7 +194,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\apps\template\stm32f103rbx\src\startup_stm32f103xb.s</PathWithFileName>
+      <PathWithFileName>..\..\src\apps\src\startup_stm32f103xb.s</PathWithFileName>
       <FilenameWithoutPath>startup_stm32f103xb.s</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -231,7 +206,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\apps\template\stm32f103rbx\src\stm32f1xx_it.c</PathWithFileName>
+      <PathWithFileName>..\..\src\apps\src\stm32f1xx_it.c</PathWithFileName>
       <FilenameWithoutPath>stm32f1xx_it.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -243,7 +218,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\apps\template\stm32f103rbx\src\system_stm32f1xx.c</PathWithFileName>
+      <PathWithFileName>..\..\src\apps\src\system_stm32f1xx.c</PathWithFileName>
       <FilenameWithoutPath>system_stm32f1xx.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -255,7 +230,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\apps\template\stm32f103rbx\src\user_interface.c</PathWithFileName>
+      <PathWithFileName>..\..\src\apps\src\user_interface.c</PathWithFileName>
       <FilenameWithoutPath>user_interface.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -264,7 +239,7 @@
 
   <Group>
     <GroupName>hal</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -275,7 +250,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\hal\stm32f103rbx\src\hal_interface.c</PathWithFileName>
+      <PathWithFileName>..\..\src\hal\src\hal_interface.c</PathWithFileName>
       <FilenameWithoutPath>hal_interface.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -284,7 +259,7 @@
 
   <Group>
     <GroupName>intoyun</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -295,7 +270,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\intoyun\src\intoyun_datapoint.c</PathWithFileName>
+      <PathWithFileName>..\..\src\intoyun\src\intoyun_datapoint.c</PathWithFileName>
       <FilenameWithoutPath>intoyun_datapoint.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -307,7 +282,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\intoyun\src\intoyun_interface.c</PathWithFileName>
+      <PathWithFileName>..\..\src\intoyun\src\intoyun_interface.c</PathWithFileName>
       <FilenameWithoutPath>intoyun_interface.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -319,7 +294,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\intoyun\src\intoyun_log.c</PathWithFileName>
+      <PathWithFileName>..\..\src\intoyun\src\intoyun_log.c</PathWithFileName>
       <FilenameWithoutPath>intoyun_log.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -331,8 +306,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\intoyun\src\intoyun_md5.c</PathWithFileName>
-      <FilenameWithoutPath>intoyun_md5.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\intoyun\src\intoyun_protocol.c</PathWithFileName>
+      <FilenameWithoutPath>intoyun_protocol.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -343,8 +318,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\intoyun\src\intoyun_protocol.c</PathWithFileName>
-      <FilenameWithoutPath>intoyun_protocol.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\intoyun\src\intoyun_key.c</PathWithFileName>
+      <FilenameWithoutPath>intoyun_key.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -355,19 +330,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\intoyun\src\intoyun_key.c</PathWithFileName>
-      <FilenameWithoutPath>intoyun_key.c</FilenameWithoutPath>
-      <RteFlg>0</RteFlg>
-      <bShared>0</bShared>
-    </File>
-    <File>
-      <GroupNumber>3</GroupNumber>
-      <FileNumber>13</FileNumber>
-      <FileType>1</FileType>
-      <tvExp>0</tvExp>
-      <tvExpOptDlg>0</tvExpOptDlg>
-      <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\intoyun\src\intoyun_timer.c</PathWithFileName>
+      <PathWithFileName>..\..\src\intoyun\src\intoyun_timer.c</PathWithFileName>
       <FilenameWithoutPath>intoyun_timer.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -376,10 +339,22 @@
 
   <Group>
     <GroupName>mcu</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
+    <File>
+      <GroupNumber>4</GroupNumber>
+      <FileNumber>13</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_adc.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_adc.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
     <File>
       <GroupNumber>4</GroupNumber>
       <FileNumber>14</FileNumber>
@@ -387,7 +362,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal.c</PathWithFileName>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal.c</PathWithFileName>
       <FilenameWithoutPath>stm32f1xx_hal.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -399,8 +374,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_adc.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_adc.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_adc_ex.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_adc_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -411,8 +386,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_adc_ex.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_adc_ex.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_can.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_can.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -423,8 +398,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_can.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_can.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_cec.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_cec.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -435,8 +410,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_cec.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_cec.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_cortex.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_cortex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -447,8 +422,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_cortex.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_cortex.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_crc.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_crc.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -459,8 +434,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_crc.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_crc.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_dac.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_dac.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -471,8 +446,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_dac.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_dac.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_dac_ex.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_dac_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -483,8 +458,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_dac_ex.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_dac_ex.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_dma.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_dma.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -495,8 +470,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_dma.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_dma.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_eth.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_eth.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -507,8 +482,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_eth.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_eth.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_flash.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_flash.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -519,8 +494,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_flash.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_flash.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_flash_ex.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_flash_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -531,8 +506,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_flash_ex.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_flash_ex.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_gpio.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_gpio.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -543,8 +518,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_gpio.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_gpio.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_gpio_ex.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_gpio_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -555,8 +530,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_gpio_ex.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_gpio_ex.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_hcd.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_hcd.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -567,8 +542,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_hcd.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_hcd.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_i2c.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_i2c.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -579,8 +554,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_i2c.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_i2c.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_i2s.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_i2s.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -591,8 +566,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_i2s.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_i2s.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_irda.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_irda.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -603,8 +578,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_irda.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_irda.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_iwdg.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_iwdg.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -615,8 +590,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_iwdg.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_iwdg.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_msp_template.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_msp_template.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -627,8 +602,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_msp_template.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_msp_template.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_nand.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_nand.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -639,8 +614,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_nand.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_nand.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_nor.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_nor.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -651,8 +626,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_nor.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_nor.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_pccard.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_pccard.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -663,8 +638,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_pccard.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_pccard.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_pcd.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_pcd.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -675,8 +650,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_pcd.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_pcd.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_pcd_ex.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_pcd_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -687,8 +662,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_pcd_ex.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_pcd_ex.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_pwr.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_pwr.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -699,8 +674,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_pwr.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_pwr.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_rcc.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_rcc.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -711,8 +686,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_rcc.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_rcc.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_rcc_ex.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_rcc_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -723,8 +698,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_rcc_ex.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_rcc_ex.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_rtc.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_rtc.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -735,8 +710,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_rtc.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_rtc.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_rtc_ex.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_rtc_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -747,8 +722,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_rtc_ex.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_rtc_ex.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_sd.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_sd.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -759,8 +734,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_sd.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_sd.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_smartcard.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_smartcard.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -771,8 +746,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_smartcard.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_smartcard.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_spi.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_spi.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -783,8 +758,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_spi.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_spi.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_spi_ex.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_spi_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -795,8 +770,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_spi_ex.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_spi_ex.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_sram.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_sram.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -807,8 +782,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_sram.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_sram.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_tim.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_tim.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -819,8 +794,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_tim.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_tim.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_tim_ex.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_tim_ex.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -831,8 +806,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_tim_ex.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_tim_ex.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_uart.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_uart.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -843,8 +818,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_uart.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_uart.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_usart.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_usart.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -855,8 +830,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_usart.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_usart.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_wwdg.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_hal_wwdg.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -867,8 +842,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_hal_wwdg.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_hal_wwdg.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_fsmc.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_ll_fsmc.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -879,8 +854,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_fsmc.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_ll_fsmc.c</FilenameWithoutPath>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_sdmmc.c</PathWithFileName>
+      <FilenameWithoutPath>stm32f1xx_ll_sdmmc.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -891,19 +866,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_sdmmc.c</PathWithFileName>
-      <FilenameWithoutPath>stm32f1xx_ll_sdmmc.c</FilenameWithoutPath>
-      <RteFlg>0</RteFlg>
-      <bShared>0</bShared>
-    </File>
-    <File>
-      <GroupNumber>4</GroupNumber>
-      <FileNumber>57</FileNumber>
-      <FileType>1</FileType>
-      <tvExp>0</tvExp>
-      <tvExpOptDlg>0</tvExpOptDlg>
-      <bDave2>0</bDave2>
-      <PathWithFileName>..\..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_usb.c</PathWithFileName>
+      <PathWithFileName>..\..\src\mcu\stm32\STM32F1xx_HAL_Driver\Src\stm32f1xx_ll_usb.c</PathWithFileName>
       <FilenameWithoutPath>stm32f1xx_ll_usb.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
