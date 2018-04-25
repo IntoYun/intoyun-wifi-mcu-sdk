@@ -32,11 +32,11 @@
 
 //硬件版本号
 //硬件版本号，为设备的硬件版本号。该版本号将上送至服务器。
-#define HARDWARE_VERSION_DEF                    "V1.0.0"
+#define HARDWARE_VERSION_DEF                    "1.0.0"
 
 //软件版本号
 //软件版本号，为设备当前软件的版本号。该版本号将上送至服务器。
-#define SOFTWARE_VERSION_DEF                    "V1.0.0"
+#define SOFTWARE_VERSION_DEF                    "1.0.0"
 
 //设备数据上报策略是否为系统自动上报
 //设备数据上报支持两种方式：

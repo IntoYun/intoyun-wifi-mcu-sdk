@@ -17,7 +17,6 @@
  */
 
 #include "iot_import.h"
-#include "sdk_config.h"
 #include "iotx_protocol_api.h"
 #include "iotx_datapoint_api.h"
 #include "iotx_system_api.h"
@@ -29,6 +28,7 @@
 
 
 pipe_t pipeRx; //定义串口数据接收缓冲区
+static recCallback_t recCallbackHandler = NULL;
 
 static bool parserInitDone = false;
 static bool cancelAllOperations = false;
@@ -155,7 +155,7 @@ static char PipeNext(pipe_t *pipe)
 static int SerialPipePutc(int c)
 {
     uint8_t data = c;
-    HAL_UartWrite(data);
+    HAL_CommWrite(data);
     return c;
 }
 
@@ -432,16 +432,9 @@ static int ProtocolParserWaitFinalResp(callbackPtr cb, void* param, uint32_t tim
                 //+RECDATA,<len>:<data>
                 else if(sscanf(cmd, "RECDATA,%d", (int*)&platformDataLen) == 1) {
                     platformData = (uint8_t *)strchr(buf, ':');
-                    /*
-                    //原始数据
-                    eventHandler(event_cloud_data, ep_cloud_data_raw,platformData,platformDataLen);
-                    uint8_t datapointType = ProtocolParserPlatformData(platformData+1, platformDataLen);
-                    if(datapointType == CUSTOMER_DEFINE_DATA){
-                        eventHandler(event_cloud_data,ep_cloud_data_custom,platformData+1,platformDataLen);
-                    }else{
-                        eventHandler(event_cloud_data,ep_cloud_data_datapoint,NULL,0);
+                    if(recCallbackHandler != NULL) {
+                        recCallbackHandler(platformData, platformDataLen);
                     }
-                    */
                 }
             }
             /*******************************************/
@@ -470,12 +463,12 @@ static int ProtocolParserWaitFinalResp(callbackPtr cb, void* param, uint32_t tim
 }
 
 //接收串口数据存入缓冲区
-void ProtocolPutPipe(uint8_t c)
+void IOT_Protocol_PutPipe(uint8_t c)
 {
     SerialPipeRxIrqBuf(c);
 }
 
-bool ProtocolParserInit(void)
+bool IOT_Protocol_ParserInit(void)
 {
     PipeInit(&pipeRx,PIPE_MAX_SIZE,NULL);
 
@@ -520,7 +513,7 @@ bool ProtocolParserInit(void)
 }
 
 //将模组重启
-bool ProtocolExecuteRestart(void)
+bool IOT_Protocol_Reboot(void)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+RST\r\n");
@@ -532,7 +525,7 @@ bool ProtocolExecuteRestart(void)
 }
 
 //将模组恢复出厂
-bool ProtocolExecuteRestore(void)
+bool IOT_Protocol_Restore(void)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+RESTORE\r\n");
@@ -543,7 +536,7 @@ bool ProtocolExecuteRestore(void)
     return false;
 }
 
-int ProtocolQueryInfoCallback(int type, const char* buf, int len, module_info_t *info)
+static int ProtocolQueryInfoCallback(int type, const char* buf, int len, module_info_t *info)
 {
     if (info && (type == TYPE_PLUS)) {
         if (sscanf(buf, "+INFO:\"%[^\"]\",\"%[^\"]\",\"%[^\"]\",%d\r\n", info->module_version,info->module_type,info->device_id,(int*)&info->at_mode) == 4) {
@@ -553,7 +546,7 @@ int ProtocolQueryInfoCallback(int type, const char* buf, int len, module_info_t 
 }
 
 //获取模块信息
-bool ProtocolQueryInfo(module_info_t *info)
+bool IOT_Protocol_QueryInfo(module_info_t *info)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+INFO?\r\n");
@@ -565,7 +558,7 @@ bool ProtocolQueryInfo(module_info_t *info)
 }
 
 //设置设备信息
-bool ProtocolSetupDevice(char *product_id, char *hardware_version, char *software_version)
+bool IOT_Protocol_SetDeviceInfo(char *product_id, char *hardware_version, char *software_version)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+DEVICE=\"%s\",\"%s\",\"%s\"\r\n",product_id,hardware_version,software_version);
@@ -576,7 +569,7 @@ bool ProtocolSetupDevice(char *product_id, char *hardware_version, char *softwar
     return false;
 }
 
-int ProtocolQueryJoinAPCallback(int type, const char* buf, int len, module_status_t *moduleStatus)
+static int ProtocolQueryJoinAPCallback(int type, const char* buf, int len, module_status_t *moduleStatus)
 {
     if (moduleStatus && (type == TYPE_PLUS)) {
         int a,b,c,d;
@@ -591,7 +584,7 @@ int ProtocolQueryJoinAPCallback(int type, const char* buf, int len, module_statu
     return WAIT;
 }
 
-bool ProtocolQueryJoinAP(module_status_t *status)
+bool IOT_Protocol_QueryJoinAP(module_status_t *status)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+JOINAP?\r\n");
@@ -603,7 +596,7 @@ bool ProtocolQueryJoinAP(module_status_t *status)
 }
 
 //设置模组连接的AP
-bool ProtocolSetupJoinAP(char *ssid,char *pwd)
+bool IOT_Protocol_JoinAP(char *ssid,char *pwd)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+JOINAP=\"%s\",\"%s\"\r\n",ssid,pwd);
@@ -614,7 +607,7 @@ bool ProtocolSetupJoinAP(char *ssid,char *pwd)
     return false;
 }
 
-int ProtocolQueryModeCallback(int type, const char* buf, int len, int *mode)
+static int ProtocolQueryModeCallback(int type, const char* buf, int len, int *mode)
 {
     if (mode && (type == TYPE_PLUS)) {
         int workMode;
@@ -626,7 +619,7 @@ int ProtocolQueryModeCallback(int type, const char* buf, int len, int *mode)
 }
 
 //查询工作模式
-int ProtocolQueryMode(void)
+int IOT_Protocol_QueryMode(void)
 {
     int mode = 0;
     if (parserInitDone) {
@@ -637,7 +630,7 @@ int ProtocolQueryMode(void)
     return mode;
 }
 
-int ProtocolSetupMode(uint8_t mode, uint32_t timeout)
+int IOT_Protocol_SetMode(uint8_t mode, uint32_t timeout)
 {
     int status = -1;
     if (parserInitDone) {
@@ -650,7 +643,7 @@ int ProtocolSetupMode(uint8_t mode, uint32_t timeout)
 }
 
 //设置连网参数
-bool ProtocolSetupJoinParams(char *device_id,char *access_token)
+bool IOT_Protocol_SetJoinParams(char *device_id,char *access_token)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+JPINPARAMS=\"%s\",\"%s\"\r\n",device_id,access_token);
@@ -661,7 +654,7 @@ bool ProtocolSetupJoinParams(char *device_id,char *access_token)
     return false;
 }
 
-int ProtocolQueryBasicParamsCallback(int type, const char* buf, int len, basic_params_t *basicParams)
+static int ProtocolQueryBasicParamsCallback(int type, const char* buf, int len, basic_params_t *basicParams)
 {
     if (basicParams && (type == TYPE_PLUS)) {
         if (sscanf(buf, "+BASICPARAMS:%d,\"%[^\"]\",%d,\"%[^\"]\",%d,\"%[^\"]\"\r\n", (int*)&basicParams->zone,basicParams->server_domain,(int*)&basicParams->server_port,basicParams->register_domain,(int*)&basicParams->register_port,basicParams->update_domain) == 6) {
@@ -670,7 +663,7 @@ int ProtocolQueryBasicParamsCallback(int type, const char* buf, int len, basic_p
     return WAIT;
 }
 
-bool ProtocolQueryBasicParams(basic_params_t *basicParams)
+bool IOT_Protocol_QueryBasicParams(basic_params_t *basicParams)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+BASICPARAMS?\r\n");
@@ -682,7 +675,7 @@ bool ProtocolQueryBasicParams(basic_params_t *basicParams)
 }
 
 //设置基本参数
-bool ProtocolSetupBasicParams(int zone, char *server_domain,int server_port,char *register_domain,int register_port, char *update_domain)
+bool IOT_Protocol_SetBasicParams(int zone, char *server_domain,int server_port,char *register_domain,int register_port, char *update_domain)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+BASICPARAMS=%d,\"%s\",%d,\"%s\",%d,\"%s\"\r\n",zone,server_domain,server_port,register_domain,register_port,update_domain);
@@ -693,7 +686,7 @@ bool ProtocolSetupBasicParams(int zone, char *server_domain,int server_port,char
     return false;
 }
 
-int ProtocolQueryNetTimeCallback(int type, const char* buf, int len, network_time_t *netTime)
+static int ProtocolQueryNetTimeCallback(int type, const char* buf, int len, network_time_t *netTime)
 {
     if (netTime && (type == TYPE_PLUS)) {
         if(sscanf(buf,"+NETTIME:%d",(int*)&netTime->status) == 1) {
@@ -707,7 +700,7 @@ int ProtocolQueryNetTimeCallback(int type, const char* buf, int len, network_tim
 }
 
 //查询网络时间
-bool ProtocolQueryNetTime(network_time_t *netTime)
+bool IOT_Protocol_QueryNetTime(network_time_t *netTime)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+NETTIME?\r\n");
@@ -718,31 +711,8 @@ bool ProtocolQueryNetTime(network_time_t *netTime)
     return false;
 }
 
-int ProtocolSetupRegisterCallback(int type, const char* buf, int len, int* errorCode)
-{
-    if (errorCode && (type == TYPE_PLUS)) {
-        int error;
-        if (sscanf(buf, "+REGISTER:%d\r\n", &error) == 1) {
-            *errorCode = error;
-        }
-    }
-    return WAIT;
-}
-
-//设置设备注册信息
-int ProtocolSetupRegister(char *product_id, char *timestamp, char *signature)
-{
-    int errorCode = -1;
-    if (parserInitDone) {
-        ProtocolParserSendFormated("AT+REGISTER=\"%s\",\"%s\",\"%s\"\r\n",product_id,timestamp,signature);
-        if (RESP_OK == ProtocolParserWaitFinalResp((callbackPtr)ProtocolSetupRegisterCallback, &errorCode,5000)) {
-        }
-    }
-    return errorCode;
-}
-
 //设置连接或者断开服务器
-bool ProtocolSetupJoin(uint8_t mode)
+bool IOT_Protocol_Join(uint8_t mode)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+JOIN=%d\r\n",mode);
@@ -753,7 +723,7 @@ bool ProtocolSetupJoin(uint8_t mode)
     return false;
 }
 
-int ProtocolQueryStatusCallback(int type, const char *buf, int len, module_status_t *moduleStatus)
+static int ProtocolQueryStatusCallback(int type, const char *buf, int len, module_status_t *moduleStatus)
 {
     if (moduleStatus && (type == TYPE_PLUS)) {
         int a,b,c,d;
@@ -769,7 +739,7 @@ int ProtocolQueryStatusCallback(int type, const char *buf, int len, module_statu
 }
 
 //查询网络状态
-bool ProtocolQueryStatus(module_status_t *status)
+bool IOT_Protocol_QueryStatus(module_status_t *status)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+STATUS?\r\n");
@@ -780,24 +750,8 @@ bool ProtocolQueryStatus(module_status_t *status)
     return false;
 }
 
-//模组主动下发的数据
-void ProtocolModuleActiveSendHandle(void)
-{
-    ProtocolParserWaitFinalResp(NULL, NULL, 0);
-}
-
-//解析平台数据
-uint8_t ProtocolParserPlatformData(const uint8_t *buffer, uint16_t len)
-{
-    uint8_t customData = 0;
-#if CONFIG_CLOUD_DATAPOINT_ENABLED == 1
-    //intoyunParseReceiveDatapoints(buffer,len,&customData);
-#endif
-    return customData;
-}
-
 //发送数据点数据
-bool ProtocolSendPlatformData(const uint8_t *buffer, uint16_t length)
+bool IOT_Protocol_SendData(uint8_t *buffer, uint16_t length)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+SENDDATA=%d\r\n",length);
@@ -811,5 +765,17 @@ bool ProtocolSendPlatformData(const uint8_t *buffer, uint16_t length)
         }
     }
     return false;
+}
+
+bool IOT_Protocol_loop(void)
+{
+    ProtocolParserWaitFinalResp(NULL, NULL, 0);
+}
+
+void IOT_Protocol_SetRevCallback(recCallback_t handler)
+{
+    if(handler != NULL) {
+        recCallbackHandler = handler;
+    }
 }
 

@@ -30,10 +30,8 @@ typedef struct
     int (*connect)(void);
     bool (*connected)(void);
     int (*disconnect)(void);
-
     //发送自定义数据
     int (*sendCustomData)(const uint8_t *buffer, uint16_t length);
-
     //数据点格式编程API接口
     //定义数据点
     void (*defineDatapointBool)(const uint16_t dpID, dp_permission_t permission, const bool value);

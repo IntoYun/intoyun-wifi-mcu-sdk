@@ -1,5 +1,4 @@
 #include "iot_export.h"
-#include "user_interface.h"
 #include "project_config.h"
 
 
@@ -23,7 +22,7 @@ uint16_t binaryLen;
 
 void eventProcess(int event, int param, uint8_t *data, uint32_t len)
 {
-    if(event == event_cloud_comm) {
+    if(event == event_cloud_data) {
         switch(param) {
             case ep_cloud_comm_data: //处理平台数据
                 //灯泡控制

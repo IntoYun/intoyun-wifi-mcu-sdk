@@ -17,7 +17,6 @@
  */
 
 #include "iot_import.h"
-#include "sdk_config.h"
 #include "iotx_comm_if_api.h"
 #include "iotx_system_api.h"
 #include "iotx_datapoint_api.h"
@@ -65,16 +64,14 @@ static void iotx_set_conn_state(iotx_conn_state_t newState)
     pconn_info->conn_state = newState;
 }
 
-/*
-static void cloud_data_receive_callback(void *pcontext, void *pclient, iotx_mqtt_event_msg_pt msg)
+static void cloud_data_receive_callback(uint8_t *data, uint32_t len)
 {
-    log_debug("cloud_data_receive_callback");
+    log_d("cloud_data_receive_callback");
 #if CONFIG_CLOUD_DATAPOINT_ENABLED == 1
-    intoyunParseReceiveDatapoints((uint8_t *)ptopic_info->payload, ptopic_info->payload_len);
+    intoyunParseReceiveDatapoints(data, len);
 #endif
-    IOT_SYSTEM_NotifyEvent(event_cloud_comm, ep_cloud_comm_data, (uint8_t *)ptopic_info->payload, ptopic_info->payload_len);
+    IOT_SYSTEM_NotifyEvent(event_cloud_comm, ep_cloud_comm_data, (uint8_t *)data, len);
 }
-*/
 
 int IOT_Comm_Init(void)
 {
@@ -84,9 +81,13 @@ int IOT_Comm_Init(void)
     }
     memset(&iotx_conn_info, 0x0, sizeof(iotx_conn_info_t));
 
+    IOT_Protocol_SetRevCallback(cloud_data_receive_callback);
+
+#if CONFIG_CLOUD_DATAPOINT_ENABLED == 1
     // 添加默认数据点
     IOT_DataPoint_DefineBool(DPID_DEFAULT_BOOL_RESET, DP_PERMISSION_UP_DOWN, false);               //reboot
     IOT_DataPoint_DefineBool(DPID_DEFAULT_BOOL_GETALLDATAPOINT, DP_PERMISSION_UP_DOWN, false);     //get all datapoint
+#endif
 
     iotx_conninfo_inited = 1;
     log_i("conn_info created successfully!");
@@ -95,24 +96,7 @@ int IOT_Comm_Init(void)
 
 int IOT_Comm_Connect(void)
 {
-#if 0
-    if(!IOT_Network_IsConnected()) {
-        return -1;
-    }
-
-    if(IOTX_CONN_STATE_CONNECTED == iotx_get_conn_state()) {
-        return 0;
-    }
-
-    int rst = iotx_comm_connect();
-    if(rst < 0) {
-        iotx_set_conn_state(IOTX_CONN_STATE_DISCONNECTED);
-    } else {
-        iotx_set_conn_state(IOTX_CONN_STATE_CONNECTED);
-    }
-
-    return rst;
-#endif
+    IOT_Protocol_Join(2);
     return 0;
 }
 
@@ -140,49 +124,28 @@ bool IOT_Comm_IsConnected(void)
 
 int IOT_Comm_Disconnect(void)
 {
-#if 0
-    iotx_set_conn_state(IOTX_CONN_STATE_INITIALIZED);
-    return iotx_comm_disconnect();
-#endif
+    IOT_Protocol_Join(1);
     return 0;
 }
 
 int IOT_Comm_SendData(const uint8_t *data, uint16_t datalen)
 {
     log_d("IOT_Comm_SendData");
-    /*
-    if(!IOT_Network_IsConnected()) {
+
+    if(!IOT_Comm_IsConnected()) {
         return -1;
     }
 
-    if(IOTX_CONN_STATE_CONNECTED != iotx_get_conn_state()) {
-        return -1;
-    }
-
-    int rst = iotx_comm_send(IOTX_CONN_SEND_DATA, data, datalen);
-    if(rst < 0) {
-        iotx_set_conn_state(IOTX_CONN_STATE_DISCONNECTED);
-    }
-    return rst;
-    */
-
-    return 0;
+    return IOT_Protocol_SendData(data, datalen) ? 0 : -1;
 }
 
 int IOT_Comm_Yield(void)
 {
-    /*
-    int rc = 0;
-    iotx_conn_info_pt pconn_info = iotx_conn_info_get();
-
-    iotx_comm_yield();
-
     if(IOT_Comm_IsConnected()) {
         intoyunSendDatapointAutomatic();
-        return 0;
     }
-    return 0;
-    */
+
+    IOT_Protocol_loop();
     return 0;
 }
 

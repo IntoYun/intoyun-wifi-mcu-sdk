@@ -17,8 +17,7 @@ static void SystemClockConfig(void)
     oscinitstruct.PLL.PLLState    = RCC_PLL_ON;
     oscinitstruct.PLL.PLLSource   = RCC_PLLSOURCE_HSE;
     oscinitstruct.PLL.PLLMUL      = RCC_PLL_MUL9;
-    if (HAL_RCC_OscConfig(&oscinitstruct)!= HAL_OK)
-    {
+    if (HAL_RCC_OscConfig(&oscinitstruct)!= HAL_OK) {
         /* Initialization Error */
         while(1);
     }
@@ -28,8 +27,7 @@ static void SystemClockConfig(void)
     clkinitstruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
     clkinitstruct.APB2CLKDivider = RCC_HCLK_DIV1;
     clkinitstruct.APB1CLKDivider = RCC_HCLK_DIV2;
-    if (HAL_RCC_ClockConfig(&clkinitstruct, FLASH_LATENCY_2)!= HAL_OK)
-    {
+    if (HAL_RCC_ClockConfig(&clkinitstruct, FLASH_LATENCY_2)!= HAL_OK) {
         /* Initialization Error */
         while(1);
     }
@@ -64,8 +62,7 @@ static void USART2_Init(void)
 void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 {
     GPIO_InitTypeDef GPIO_InitStruct;
-    if(huart->Instance == USART1)
-    {
+    if(huart->Instance == USART1) {
         /* Peripheral clock enable */
         __USART1_CLK_ENABLE();
         __HAL_RCC_GPIOA_CLK_ENABLE();
@@ -87,9 +84,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
         HAL_NVIC_SetPriority(USART1_IRQn, 3, 0);
         HAL_NVIC_EnableIRQ(USART1_IRQn);
         __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
-    }
-    else if(huart->Instance == USART2)
-    {
+    } else if(huart->Instance == USART2) {
         /* Peripheral clock enable */
         __USART2_CLK_ENABLE();
         __HAL_RCC_GPIOA_CLK_ENABLE();
@@ -107,16 +102,13 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 
 void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 {
-    if(huart->Instance == USART1)
-    {
+    if(huart->Instance == USART1) {
         /* Peripheral clock disable */
         __USART1_CLK_DISABLE();
         HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9|GPIO_PIN_10);
         /* Peripheral interrupt Deinit*/
         HAL_NVIC_DisableIRQ(USART1_IRQn);
-    }
-    else if(huart->Instance == USART2)
-    {
+    } else if(huart->Instance == USART2) {
         __USART2_CLK_DISABLE();
         HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2|GPIO_PIN_3);
         /* Peripheral interrupt Deinit*/
@@ -132,17 +124,6 @@ void HAL_SystemInit(void)
     USART1_Init();
 }
 
-//获取系统滴答定时器计数值 单位ms
-uint32_t HAL_Millis(void)
-{
-    return HAL_GetTick();
-}
-
-uint32_t HAL_UptimeMs(void)
-{
-    return HAL_GetTick();
-}
-
 void *HAL_Malloc(uint32_t size)
 {
     return malloc(size);
@@ -153,10 +134,21 @@ void HAL_Free(void *ptr)
     free(ptr);
 }
 
+void HAL_SystemReboot(void)
+{
+    NVIC_SystemReset();
+}
+
+uint32_t HAL_UptimeMs(void)
+{
+    return HAL_GetTick();
+}
+
 //串口发送数据到模组
-void HAL_UartWrite(uint8_t c)
+void HAL_CommWrite(uint8_t c)
 {
     uint8_t data = c;
+
     HAL_UART_Transmit(&huart1, &data, 1, 100);
 }
 

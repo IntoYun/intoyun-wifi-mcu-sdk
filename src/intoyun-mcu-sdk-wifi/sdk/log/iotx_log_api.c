@@ -24,7 +24,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "iot_import.h"
-#include "sdk_config.h"
 #include "iotx_log_api.h"
 
 

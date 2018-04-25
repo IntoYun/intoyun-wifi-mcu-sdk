@@ -24,13 +24,13 @@ static event_handler_t eventHandler = NULL;
 
 void IOT_SYSTEM_SetDeviceInfo(char *productID, char *productSecret, char *hardwareVersion, char *softwareVersion)
 {
-    ProtocolSetupDevice(productID, hardwareVersion, softwareVersion);
+    IOT_Protocol_SetDeviceInfo(productID, hardwareVersion, softwareVersion);
 }
 
 void IOT_SYSTEM_GetModuleInfo(char *moduleVersion, char *moduleType, char *deviceId, uint8_t *at_mode)
 {
     module_info_t info;
-    if(!ProtocolQueryInfo(&info)) {
+    if(!IOT_Protocol_QueryInfo(&info)) {
         return;
     }
 
@@ -71,34 +71,34 @@ void IOT_SYSTEM_NotifyEvent(iotx_system_event_t event, iotx_system_events_param_
 
 bool IOT_SYSTEM_SetMode(mode_type_t mode, uint32_t timeout)
 {
-    return ProtocolSetupMode((uint8_t)mode,timeout);
+    return IOT_Protocol_SetMode((uint8_t)mode,timeout);
 }
 
 mode_type_t IOT_SYSTEM_GetMode(void)
 {
-    return (mode_type_t)ProtocolQueryMode();
+    return (mode_type_t)IOT_Protocol_QueryMode();
 }
 
 bool IOT_SYSTEM_Restart(void)
 {
-    return ProtocolExecuteRestart();
+    return IOT_Protocol_Reboot();
 }
 
 bool IOT_SYSTEM_Restore(void)
 {
-    return ProtocolExecuteRestore();
+    return IOT_Protocol_Restore();
 }
 
 void IOT_SYSTEM_PutPipe(uint8_t value)
 {
-    ProtocolPutPipe(value);//将接收到的数据放入缓冲区
+    IOT_Protocol_PutPipe(value);//将接收到的数据放入缓冲区
 }
 
 bool IOT_SYSTEM_GetNetTime(char *net_time, char *timestamp)
 {
     network_time_t netTime;
 
-    if(!ProtocolQueryNetTime(&netTime)) {
+    if(!IOT_Protocol_QueryNetTime(&netTime)) {
         return false;
     }
     if(netTime.status == 1) {
@@ -113,7 +113,7 @@ uint8_t IOT_SYSTEM_GetStatus(char *ssid, uint32_t *ipAddr, int *rssi)
 {
     module_status_t moduleStatus;
 
-    if(!ProtocolQueryStatus(&moduleStatus)) {
+    if(!IOT_Protocol_QueryStatus(&moduleStatus)) {
         return 0;
     }
 

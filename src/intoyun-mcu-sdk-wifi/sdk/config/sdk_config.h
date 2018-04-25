@@ -22,8 +22,8 @@
 #define SDK_VERSION                        "1.1.0"
 
 #define CONFIG_CLOUD_DATAPOINT_ENABLED     1   //是否使能数据点通讯接口
-#define CONFIG_KEY_ENABLE                  1   //是否按键接口功能
-#define CONFIG_TIMER_ENABLE                1   //是否定时器接口功能
+#define CONFIG_SYSTEM_KEY_ENABLE           1   //是否按键接口功能
+#define CONFIG_SYSTEM_TIMER_ENABLE         1   //是否定时器接口功能
 
 // 数据点相关配置
 #define CONFIG_PROPERTIES_MAX              50  //支持的数据点的最大个数

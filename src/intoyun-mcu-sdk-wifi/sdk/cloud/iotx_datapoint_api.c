@@ -17,7 +17,6 @@
  */
 
 #include "iot_import.h"
-#include "sdk_config.h"
 #include "iotx_protocol_api.h"
 #include "iotx_datapoint_api.h"
 

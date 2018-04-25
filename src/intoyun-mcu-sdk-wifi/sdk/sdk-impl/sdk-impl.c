@@ -94,8 +94,7 @@ const iot_cloud_if_t Cloud =
     IOT_Comm_Connect,
     IOT_Comm_IsConnected,
     IOT_Comm_Disconnect,
-    ProtocolSendPlatformData,
-
+    intoyunTransmitData,
 #if CONFIG_CLOUD_DATAPOINT_ENABLED == 1
     IOT_DataPoint_DefineBool,
     IOT_DataPoint_DefineNumber,
@@ -128,6 +127,7 @@ const iot_cloud_if_t Cloud =
 #endif
 };
 
+#if CONFIG_SYSTEM_TIMER_ENABLE == 1
 const iot_keys_if_t Key =
 {
     IOT_KEY_Init,
@@ -140,7 +140,9 @@ const iot_keys_if_t Key =
     IOT_KEY_PressDuringCb,
     IOT_KEY_Loop,
 };
+#endif
 
+#if CONFIG_SYSTEM_TIMER_ENABLE == 1
 const iot_timers_if_t Timer =
 {
     IOT_TIMER_Register,
@@ -150,4 +152,5 @@ const iot_timers_if_t Timer =
     IOT_TIMER_Reset,
     IOT_TIMER_Loop,
 };
+#endif
 

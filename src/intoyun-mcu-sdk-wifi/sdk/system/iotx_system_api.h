@@ -30,7 +30,8 @@ extern "C"
 typedef enum {
     event_mode_changed   = 1,
     event_network_status = 2,
-    event_cloud_data     = 3,
+    event_cloud_status   = 3,
+    event_cloud_comm     = 4,
 } iotx_system_event_t;
 
 typedef enum {
