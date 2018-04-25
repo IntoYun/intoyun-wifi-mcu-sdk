@@ -40,7 +40,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f1xx_it.h"
 #include "stm32f1xx_hal.h"
-#include "intoyun_interface.h"
+#include "iot_export.h"
 #include "user_interface.h"
 
 extern UART_HandleTypeDef huart1; //USART1用于与模组通讯

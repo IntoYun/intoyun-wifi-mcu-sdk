@@ -1,321 +1,40 @@
-/**
-******************************************************************************
-Copyright (c) 2013-2014 Intoyun Team.  All right reserved.
+/*
+ * Copyright (c) 2013-2018 Molmc Group. All rights reserved.
+ * License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation, either
-version 3 of the License, or (at your option) any later version.
+#include "iot_import.h"
+#include "sdk_config.h"
+#include "iotx_protocol_api.h"
+#include "iotx_datapoint_api.h"
 
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
+#if CONFIG_CLOUD_DATAPOINT_ENABLED == 1
 
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, see <http://www.gnu.org/licenses/>.
-******************************************************************************
-*/
-
-#include "intoyun_datapoint.h"
-#include "intoyun_interface.h"
-#include "intoyun_config.h"
-#include "intoyun_log.h"
-#include "intoyun_md5.h"
-
-/* #define INTOYUN_DEBUG */
-
-
-property_conf *properties[PROPERTIES_MAX];
+property_conf *properties[CONFIG_PROPERTIES_MAX];
 
 int properties_count = 0;
-event_handler_t eventHandler = NULL;
-bool cloudConnected = false;
-bool moduleConnectNetwork = false;
-static char product_id[17];
-static char product_secret[33];
-static uint8_t at_mode = 0;
-static bool deviceRegisterEn = true;
-static uint32_t deviceRegisterID = 0;
-static uint8_t deviceRegisterCnt = 0;
 
 //初始化设置参数 自动发送 发送间隔时间  发送运行时间
-volatile datapoint_control_t g_datapoint_control = {DP_TRANSMIT_MODE_AUTOMATIC, DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL, 0};
+volatile datapoint_control_t g_datapoint_control = {DP_TRANSMIT_MODE_AUTOMATIC, CONFIG_AUTOMATIC_INTERVAL, 0};
 
-void intoyunInit(void)
-{
-    device_info_t info;
-    HAL_SystemInit();
-    ProtocolParserInit();
-    delay(5);
-    #ifdef CONFIG_INTOYUN_DATAPOINT
-    intoyunDefineDatapointBool(DPID_DEFAULT_BOOL_GETALLDATAPOINT, DP_PERMISSION_UP_DOWN, false);     //get all datapoint
-    #endif
-
-    if(!ProtocolQueryInfo(&info)){
-        return;
-    }
-    at_mode = info.at_mode;
-    deviceRegisterID = timerGetId();
-    log_v("at_mode=%d\r\n",at_mode);
-}
-
-static void intoyunDeviceRegister(void)
-{
-    if(at_mode != 0){ //已注册
-        return;
-    }
-
-    network_time_t networkTime;
-    if(moduleConnectNetwork){ //已经联网 可以注册
-        if(deviceRegisterEn){
-            if(timerIsEnd(deviceRegisterID,3000)){
-                log_v("start device register\r\n");
-                deviceRegisterID = timerGetId();
-                if(++deviceRegisterCnt >= 3){
-                    log_v("stop device register\r\n");
-                    deviceRegisterEn = false;
-                }
-
-                if(!ProtocolQueryNetTime(&networkTime)){
-                    log_v("get networkTime fail\r\n");
-                    return;
-                }
-                log_v("timestamp=%s\r\n",networkTime.timestamp);
-                char tmp[64] = {0};
-                char signature[33] = {0};
-                sprintf(tmp,"%s%s",networkTime.timestamp,product_secret);
-                log_v("tmp=%s\r\n",tmp);
-                md5_output((uint8_t *)tmp,strlen(tmp),signature);
-                log_v("signature=%s\r\n",signature);
-                if(ProtocolSetupRegister(product_id,networkTime.timestamp,signature) == 1){
-                    at_mode = 1;
-                    log_v("device register success\r\n");
-                    return;
-                }
-            }
-        }
-    }
-}
-
-void intoyunLoop(void)
-{
-    ProtocolModuleActiveSendHandle();
-    #ifdef CONFIG_INTOYUN_DATAPOINT
-    if(intoyunConnected()){
-        intoyunSendDatapointAutomatic();
-    }
-    #endif
-    intoyunDeviceRegister();
-}
-
-void intoyunSetEventCallback(event_handler_t handler)
-{
-    if(handler != NULL){
-        eventHandler = handler;
-    }
-}
-
-bool intoyunSetMode(mode_type_t mode, uint32_t timeout)
-{
-    return ProtocolSetupMode((uint8_t)mode,timeout);
-}
-
-mode_type_t intoyunGetMode(void)
-{
-    return (mode_type_t)ProtocolQueryMode();
-}
-
-
-void intoyunSetDevice(char *productId, char *productSecret, char *hardVer, char *softVer)
-{
-    strncpy(product_id,productId,sizeof(product_id));
-    strncpy(product_secret,productSecret,sizeof(product_secret));
-    log_v("product_id=%s\r\n",product_id);
-    log_v("product_secret=%s\r\n",product_secret);
-    ProtocolSetupDevice(productId,hardVer,softVer);
-}
-
-void intoyunGetDevice(char *productId, char *hardVer, char *softVer)
-{
-    device_info_t info;
-    if(!ProtocolQueryDevice(&info)){
-        log_v("query device command fail\r\n");
-        return;
-    }
-
-    log_v("productId = %s\r\n",info.product_id);
-    log_v("hardVer = %s\r\n",info.hardware_version);
-    log_v("softVer = %s\r\n",info.software_version);
-
-    strncpy(productId,info.product_id,sizeof(info.product_id));
-    strncpy(hardVer,info.hardware_version,sizeof(info.hardware_version));
-    strncpy(softVer,info.software_version,sizeof(info.software_version));
-}
-
-void intoyunGetInfo(char *moduleVersion, char *moduleType, char *deviceId, uint8_t *at_mode)
-{
-    device_info_t info;
-    if(!ProtocolQueryInfo(&info)){
-        return;
-    }
-
-    log_v("moduleVer = %s\r\n",info.module_version);
-    log_v("moduleType = %s\r\n",info.module_type);
-    log_v("deviceId = %s\r\n",info.device_id);
-    log_v("atmode = %d\r\n",info.at_mode);
-
-    strncpy(moduleVersion,info.module_version,sizeof(info.module_version));
-    strncpy(moduleType,info.module_type,sizeof(info.module_type));
-    strncpy(deviceId,info.device_id,sizeof(info.device_id));
-    *at_mode = info.at_mode;
-}
-
-bool intoyunExecuteRestart(void)
-{
-    return ProtocolExecuteRestart();
-}
-
-bool intoyunExecuteRestore(void)
-{
-    return ProtocolExecuteRestore();
-}
-
-void intoyunPutPipe(uint8_t value)
-{
-    ProtocolPutPipe(value);//将接收到的数据放入缓冲区
-}
-
-bool intoyunGetNetTime(char *net_time, char *timestamp)
-{
-    network_time_t netTime;
-    if(!ProtocolQueryNetTime(&netTime)){
-        return false;
-    }
-    if(netTime.status == 1){
-        strncpy(net_time,netTime.net_time,sizeof(netTime.net_time));
-        strncpy(timestamp,netTime.timestamp,sizeof(netTime.timestamp));
-        return true;
-    }
-    return false;
-}
-
-uint8_t intoyunGetStatus(char *ssid, uint32_t *ipAddr, int *rssi)
-{
-    module_status_t moduleStatus;
-    if(!ProtocolQueryStatus(&moduleStatus)){
-        return 0;
-    }
-
-    if(moduleStatus.module_status != 1){
-        log_v("ssid=%s\r\n",moduleStatus.wifi.ssid);
-        log_v("ipAddr=%d\r\n",moduleStatus.wifi.ipAddr);
-        log_v("rssi=%d\r\n",moduleStatus.wifi.rssi);
-        strncpy(ssid,moduleStatus.wifi.ssid,sizeof(moduleStatus.wifi.ssid));
-        *ipAddr = moduleStatus.wifi.ipAddr;
-        *rssi = moduleStatus.wifi.rssi;
-    }
-    return moduleStatus.module_status;
-}
-
-void intoyunConnect(void)
-{
-    ProtocolSetupJoin(2);
-}
-
-bool intoyunConnected(void)
-{
-    if(cloudConnected){ //已连接平台
-        return true;
-    }
-    return false;
-}
-
-void intoyunDisconnect(void)
-{
-    ProtocolSetupJoin(1);
-}
-
-bool intoyunDisconnected(void)
-{
-    if(!cloudConnected){ //与平台断开
-        return true;
-    }
-    return false;
-}
-
-//发送数据
-static void intoyunTransmitData(const uint8_t *buffer, uint16_t len)
-{
-    ProtocolSendPlatformData(buffer, len);
-}
-
-void intoyunSendCustomData(const uint8_t *buffer, uint16_t len)
-{
-    uint8_t buf[256];
-    uint16_t index = len+1;
-    if(index > 256){
-        index = 256;
-    }
-
-    buf[0] = CUSTOMER_DEFINE_DATA;
-    memcpy(&buf[1],buffer,index-1);
-    intoyunTransmitData(buf,index);
-}
-
-void intoyunDatapointControl(dp_transmit_mode_t mode, uint32_t lapse)
-{
-    g_datapoint_control.datapoint_transmit_mode = mode;
-    if(DP_TRANSMIT_MODE_AUTOMATIC == g_datapoint_control.datapoint_transmit_mode){
-        if(lapse < DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL){
-            g_datapoint_control.datapoint_transmit_lapse = DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL;
-        }else{
-            g_datapoint_control.datapoint_transmit_lapse = lapse;
-        }
-    }else{
-        g_datapoint_control.datapoint_transmit_lapse = 0;
-        g_datapoint_control.runtime = 0;
-    }
-}
-
-#ifdef CONFIG_INTOYUN_DATAPOINT
-//小数点
-static double _pow(double base, int exponent)
-{
-    double result = 1.0;
-    int i = 0;
-
-    for (i = 0; i < exponent; i++) {
-        result *= base;
-    }
-    return result;
-}
-
-//剔除默认数据点，可上送数据点的个数
-static uint8_t intoyunGetPropertyPermissionUpCount(void)
-{
-    uint8_t count = 0;
-
-    for (int i = 0; i < properties_count; i++) {
-        //系统默认dpID  不上传
-        if (properties[i]->dpID > 0x3F00) {
-            continue;
-        }
-
-        //允许上送
-        if((DP_PERMISSION_UP_ONLY == properties[i]->permission) || (DP_PERMISSION_UP_DOWN == properties[i]->permission)) {
-            count++;
-        }
-    }
-    return count;
-}
 
 static int intoyunDiscoverProperty(const uint16_t dpID)
 {
-    for (int index = 0; index < properties_count; index++)
-    {
-        if (properties[index]->dpID == dpID)
-        {
+    for (int index = 0; index < properties_count; index++) {
+        if (properties[index]->dpID == dpID) {
             return index;
         }
     }
@@ -324,8 +43,8 @@ static int intoyunDiscoverProperty(const uint16_t dpID)
 
 static bool intoyunPropertyChanged(void)
 {
-    for (int i = 0; i < properties_count; i++){
-        if (properties[i]->change){
+    for (int i = 0; i < properties_count; i++) {
+        if (properties[i]->change) {
             return true;
         }
     }
@@ -339,160 +58,126 @@ static uint8_t intoyunGetPropertyCount(void)
 
 static void intoyunPropertyChangeClear(void)
 {
-    for (int i = 0; i < properties_count; i++){
-        if (properties[i]->change){
+    for (int i = 0; i < properties_count; i++) {
+        if (properties[i]->change) {
             properties[i]->change = false;
         }
     }
 }
 
+static double _pow(double base, int exponent)
+{
+    double result = 1.0;
+    int i = 0;
 
-static dp_transmit_mode_t intoyunGetDatapointTransmitMode(void)
+    for (i = 0; i < exponent; i++) {
+        result *= base;
+    }
+    return result;
+}
+
+dp_transmit_mode_t intoyunGetDatapointTransmitMode(void)
 {
     return g_datapoint_control.datapoint_transmit_mode;
 }
 
-static void intoyunDatapointValueInit(uint16_t count,uint16_t dpID,data_type_t dataType,dp_permission_t permission)
+void IOT_DataPoint_Control(dp_transmit_mode_t mode, uint32_t lapse)
 {
-    properties[count]=(property_conf*)malloc(sizeof(property_conf));
+    g_datapoint_control.datapoint_transmit_mode = mode;
+    if(DP_TRANSMIT_MODE_AUTOMATIC == g_datapoint_control.datapoint_transmit_mode) {
+        if(lapse < CONFIG_AUTOMATIC_INTERVAL) {
+            g_datapoint_control.datapoint_transmit_lapse = CONFIG_AUTOMATIC_INTERVAL;
+        } else {
+            g_datapoint_control.datapoint_transmit_lapse = lapse;
+        }
+    }
+}
+
+static void intoyunDatapointValueInit(uint16_t count, uint16_t dpID, data_type_t dataType, dp_permission_t permission)
+{
+    properties[count]=(property_conf*)HAL_Malloc(sizeof(property_conf));
 
     properties[count]->dpID       = dpID;
     properties[count]->dataType   = dataType;
     properties[count]->permission = permission;
-    properties[count]->change     = false;
+    properties[count]->runtime    = 0;
     properties[count]->readFlag   = RESULT_DATAPOINT_OLD;
 }
 
-void intoyunDefineDatapointBool(const uint16_t dpID, dp_permission_t permission, const bool value)
+void IOT_DataPoint_DefineBool(const uint16_t dpID, dp_permission_t permission, const bool value)
 {
-    if (-1 == intoyunDiscoverProperty(dpID)){
+    if (-1 == intoyunDiscoverProperty(dpID)) {
         intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_BOOL,permission);
         properties[properties_count]->boolValue=value;
-
-        #ifdef INTOYUN_DEBUG
-        log_v("bool type datapoint\r\n");
-        log_v("%d\r\n",properties_count);
-        log_v("%d\r\n",properties[properties_count]->dpID);
-        log_v("%d\r\n",properties[properties_count]->dataType);
-        log_v("%d\r\n",properties[properties_count]->permission);
-        #endif
         properties_count++; // count the number of properties
     }
 }
 
-void intoyunDefineDatapointNumber(const uint16_t dpID, dp_permission_t permission, const double minValue, const double maxValue, const int resolution, const double value)
+void IOT_DataPoint_DefineNumber(const uint16_t dpID, dp_permission_t permission, const double minValue, const double maxValue, const int resolution, const double value)
 {
-    if (-1 == intoyunDiscoverProperty(dpID)){
+    if (-1 == intoyunDiscoverProperty(dpID)) {
         intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_NUM,permission);
 
         double defaultValue = value;
-        if(defaultValue < minValue){
+        if(defaultValue < minValue) {
             defaultValue = minValue;
-        }else if(defaultValue > maxValue){
+        } else if(defaultValue > maxValue) {
             defaultValue = maxValue;
         }
 
-        if(resolution == 0){
+        if(resolution == 0) {
             properties[properties_count]->numberIntValue=value;
-        }else{
+        } else {
             properties[properties_count]->numberDoubleValue=value;
         }
         properties[properties_count]->numberProperty.minValue = minValue;
         properties[properties_count]->numberProperty.maxValue = maxValue;
         properties[properties_count]->numberProperty.resolution = resolution;
-
-        #ifdef INTOYUN_DEBUG
-        log_v("number type datapoint\r\n");
-        log_v("%d\r\n",properties_count);
-        log_v("%d\r\n",properties[properties_count]->dpID);
-        log_v("%d\r\n",properties[properties_count]->dataType);
-        log_v("%d\r\n",properties[properties_count]->permission);
-        log_v("%f\r\n",properties[properties_count]->numberProperty.minValue);
-        log_v("%f\r\n",properties[properties_count]->numberProperty.maxValue);
-        log_v("%d\r\n",properties[properties_count]->numberProperty.resolution);
-
-        if(resolution == 0)
-            log_v("%d\r\n",properties[properties_count]->numberIntValue);
-        else
-            log_v("%f\r\n",properties[properties_count]->numberDoubleValue);
-
-        #endif
         properties_count++; // count the number of properties
     }
 }
 
-void intoyunDefineDatapointEnum(const uint16_t dpID, dp_permission_t permission, const int value)
+void IOT_DataPoint_DefineEnum(const uint16_t dpID, dp_permission_t permission, const int value)
 {
-    if (-1 == intoyunDiscoverProperty(dpID)){
+    if (-1 == intoyunDiscoverProperty(dpID)) {
         int defaultValue = value;
-        if(defaultValue < 0){
+        if(defaultValue < 0) {
             defaultValue = 0;
         }
 
         intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_ENUM,permission);
         properties[properties_count]->enumValue = defaultValue;
-        #ifdef INTOYUN_DEBUG
-        log_v("enum type datapoint\r\n");
-        log_v("%d\r\n",properties_count);
-        log_v("%d\r\n",properties[properties_count]->dpID);
-        log_v("%d\r\n",properties[properties_count]->dataType);
-        log_v("%d\r\n",properties[properties_count]->permission);
-        log_v("%d\r\n",properties[properties_count]->enumValue);
-        #endif
         properties_count++; // count the number of properties
     }
 }
 
-void intoyunDefineDatapointString(const uint16_t dpID, dp_permission_t permission, const char *value)
+void IOT_DataPoint_DefineString(const uint16_t dpID, dp_permission_t permission, const char *value)
 {
-    if (-1 == intoyunDiscoverProperty(dpID)){
+    if (-1 == intoyunDiscoverProperty(dpID)) {
         intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_STRING,permission);
-        properties[properties_count]->stringValue = (char *)malloc(strlen(value)+1);
+        properties[properties_count]->stringValue = (char *)HAL_Malloc(strlen(value)+1);
         strncpy(properties[properties_count]->stringValue,value,strlen(value)+1);
-
-        #ifdef INTOYUN_DEBUG
-        log_v("string type datapoint\r\n");
-        log_v("%d\r\n",properties_count);
-        log_v("%d\r\n",properties[properties_count]->dpID);
-        log_v("%d\r\n",properties[properties_count]->dataType);
-        log_v("%d\r\n",properties[properties_count]->permission);
-        log_v("%s\r\n",properties[properties_count]->stringValue);
-        #endif
         properties_count++; // count the number of properties
     }
 }
 
-void intoyunDefineDatapointBinary(const uint16_t dpID, dp_permission_t permission, const uint8_t *value, const uint16_t len)
+void IOT_DataPoint_DefineBinary(const uint16_t dpID, dp_permission_t permission, const uint8_t *value, const uint16_t len)
 {
-    if (-1 == intoyunDiscoverProperty(dpID)){
+    if (-1 == intoyunDiscoverProperty(dpID)) {
         intoyunDatapointValueInit(properties_count,dpID,DATA_TYPE_BINARY,permission);
-        properties[properties_count]->binaryValue.value = (uint8_t *)malloc(len);
-        for(uint8_t i=0;i<len;i++){
+        properties[properties_count]->binaryValue.value = (uint8_t *)HAL_Malloc(len);
+        for(uint8_t i=0;i<len;i++) {
             properties[properties_count]->binaryValue.value[i] = value[i];
         }
         properties[properties_count]->binaryValue.len = (uint16_t)len;
-
-        #ifdef INTOYUN_DEBUG
-        log_v("binary type datapoint\r\n");
-        log_v("%d\r\n",properties_count);
-        log_v("%d\r\n",properties[properties_count]->dpID);
-        log_v("%d\r\n",properties[properties_count]->dataType);
-        log_v("%d\r\n",properties[properties_count]->permission);
-        log_v("%d\r\n",properties[properties_count]->binaryValue.len);
-
-        for(uint8_t i=0;i<len;i++)
-        {
-            log_v("data=0x%x\r\n",properties[properties_count]->binaryValue.value[i]);
-        }
-        #endif
         properties_count++; // count the number of properties
     }
 }
 
-read_datapoint_result_t intoyunReadDatapointBool(const uint16_t dpID, bool *value)
+read_datapoint_result_t IOT_DataPoint_ReadBool(const uint16_t dpID, bool *value)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1){
+    if (index == -1) {
         return RESULT_DATAPOINT_NONE;
     }
 
@@ -502,10 +187,10 @@ read_datapoint_result_t intoyunReadDatapointBool(const uint16_t dpID, bool *valu
     return readResult;
 }
 
-read_datapoint_result_t intoyunReadDatapointNumberInt32(const uint16_t dpID, int32_t *value)
+read_datapoint_result_t IOT_DataPoint_ReadNumberInt32(const uint16_t dpID, int32_t *value)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1){
+    if (index == -1) {
         return RESULT_DATAPOINT_NONE;
     }
 
@@ -515,10 +200,10 @@ read_datapoint_result_t intoyunReadDatapointNumberInt32(const uint16_t dpID, int
     return readResult;
 }
 
-read_datapoint_result_t intoyunReadDatapointNumberDouble(const uint16_t dpID, double *value)
+read_datapoint_result_t IOT_DataPoint_ReadNumberDouble(const uint16_t dpID, double *value)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1){
+    if (index == -1) {
         return RESULT_DATAPOINT_NONE;
     }
 
@@ -528,10 +213,10 @@ read_datapoint_result_t intoyunReadDatapointNumberDouble(const uint16_t dpID, do
     return readResult;
 }
 
-read_datapoint_result_t intoyunReadDatapointEnum(const uint16_t dpID, int *value)
+read_datapoint_result_t IOT_DataPoint_ReadEnum(const uint16_t dpID, int *value)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1){
+    if (index == -1) {
         return RESULT_DATAPOINT_NONE;
     }
 
@@ -541,16 +226,14 @@ read_datapoint_result_t intoyunReadDatapointEnum(const uint16_t dpID, int *value
     return readResult;
 }
 
-
-read_datapoint_result_t intoyunReadDatapointString(const uint16_t dpID, char *value)
+read_datapoint_result_t IOT_DataPoint_ReadString(const uint16_t dpID, char *value)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1){
+    if (index == -1) {
         return RESULT_DATAPOINT_NONE;
     }
 
-    for(uint16_t i=0;i<strlen(properties[index]->stringValue);i++)
-    {
+    for(uint16_t i=0;i<strlen(properties[index]->stringValue);i++) {
         value[i] = properties[index]->stringValue[i];
     }
     read_datapoint_result_t readResult = properties[index]->readFlag;
@@ -558,21 +241,17 @@ read_datapoint_result_t intoyunReadDatapointString(const uint16_t dpID, char *va
     return readResult;
 }
 
-read_datapoint_result_t intoyunReadDatapointBinary(const uint16_t dpID, uint8_t *value, uint16_t *len)
+read_datapoint_result_t IOT_DataPoint_ReadBinary(const uint16_t dpID, uint8_t *value, uint16_t len)
 {
-    uint16_t length = *len;
     int index = intoyunDiscoverProperty(dpID);
-    if (index == -1){
+    if (index == -1) {
         return RESULT_DATAPOINT_NONE;
     }
-    if(length > properties[index]->binaryValue.len){
-        length = properties[index]->binaryValue.len;
-    }
-    for(uint16_t i=0;i<length;i++)
-    {
+
+    for(uint16_t i=0;i<len;i++) {
         value[i] = properties[index]->binaryValue.value[i];
     }
-    *len = length;
+    len = properties[index]->binaryValue.len;
     read_datapoint_result_t readResult = properties[index]->readFlag;
     properties[index]->readFlag = RESULT_DATAPOINT_OLD;
 
@@ -580,541 +259,508 @@ read_datapoint_result_t intoyunReadDatapointBinary(const uint16_t dpID, uint8_t 
 }
 
 // dpCtrlType   0: 平台控制写数据   1：用户写数据
-
-static void intoyunPlatformWriteDatapointBool(const uint16_t dpID, bool value, bool dpCtrlType)
+void intoyunPlatformWriteDatapointBool(const uint16_t dpID, bool value, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1){
+    if(index == -1) {
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_BOOL){
+    if(properties[index]->dataType != DATA_TYPE_BOOL) {
         return;
-    }else{
-        if(properties[index]->boolValue != value){
+    } else {
+        if(properties[index]->boolValue != value) {
             properties[index]->change = true;
-            if(dpCtrlType){ //用户操作
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
             properties[index]->boolValue = value;
-        }else{
-            if(dpCtrlType){ //用户操作
-                properties[index]->change = false;
+        } else {
+            properties[index]->change = false;
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
-                properties[index]->change = true;
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
     }
 }
-
-void intoyunWriteDatapointBool(const uint16_t dpID, bool value)
+void IOT_DataPoint_WriteBool(const uint16_t dpID, bool value)
 {
     intoyunPlatformWriteDatapointBool(dpID,value,true);
 }
 
-static void intoyunPlatformWriteDatapointNumberInt32(const uint16_t dpID, int32_t value, bool dpCtrlType)
+void intoyunPlatformWriteDatapointNumberInt32(const uint16_t dpID, int32_t value, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1){
+    if(index == -1) {
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_NUM || properties[index]->numberProperty.resolution != 0){
+    if(properties[index]->dataType != DATA_TYPE_NUM || properties[index]->numberProperty.resolution != 0) {
         return;
-    }else{
+    } else {
         int32_t tmp = value;
-        if(tmp < properties[index]->numberProperty.minValue){
+        if(tmp < properties[index]->numberProperty.minValue) {
             tmp = properties[index]->numberProperty.minValue;
-        }else if(tmp > properties[index]->numberProperty.maxValue){
+        } else if(tmp > properties[index]->numberProperty.maxValue) {
             tmp = properties[index]->numberProperty.maxValue;
         }
 
-        if(properties[index]->numberIntValue != value){
+        if(properties[index]->numberIntValue != value) {
             properties[index]->change = true;
-            if(dpCtrlType){ //用户操作
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
             properties[index]->numberIntValue = tmp;
-        }else{
-            if(dpCtrlType){ //用户操作
-                properties[index]->change = false;
+        } else {
+            properties[index]->change = false;
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
-                properties[index]->change = true;
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
     }
 }
 
-void intoyunWriteDatapointNumberInt32(const uint16_t dpID, int32_t value)
+void IOT_DataPoint_WriteNumberInt32(const uint16_t dpID, int32_t value)
 {
     intoyunPlatformWriteDatapointNumberInt32(dpID,value,true);
 }
 
-static void intoyunPlatformWriteDatapointNumberDouble(const uint16_t dpID, double value, bool dpCtrlType)
+void intoyunPlatformWriteDatapointNumberDouble(const uint16_t dpID, double value, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1){
+    if(index == -1) {
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_NUM || properties[index]->numberProperty.resolution == 0){
+    if(properties[index]->dataType != DATA_TYPE_NUM || properties[index]->numberProperty.resolution == 0) {
         return;
-    }else{
+    } else {
         int32_t tmp;
         double d = value;
-        if(d < properties[index]->numberProperty.minValue){
+        if(d < properties[index]->numberProperty.minValue) {
             d = properties[index]->numberProperty.minValue;
-        }else if(d > properties[index]->numberProperty.maxValue){
+        } else if(d > properties[index]->numberProperty.maxValue) {
             d = properties[index]->numberProperty.maxValue;
         }
 
         //保证小数点位数
         tmp = (int32_t)(d * _pow(10, properties[index]->numberProperty.resolution));
 
-        if(properties[index]->numberDoubleValue != d){
+        if(properties[index]->numberDoubleValue != d) {
             properties[index]->change = true;
-            if(dpCtrlType){ //用户操作
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
 
             properties[index]->numberDoubleValue = tmp/(double)_pow(10, properties[index]->numberProperty.resolution);
-        }else{
-            if(dpCtrlType){ //用户操作
-                properties[index]->change = false;
+        } else {
+            properties[index]->change = false;
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
-                properties[index]->change = true;
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
     }
 }
 
-void intoyunWriteDatapointNumberDouble(const uint16_t dpID, double value)
+void IOT_DataPoint_WriteNumberDouble(const uint16_t dpID, double value)
 {
     intoyunPlatformWriteDatapointNumberDouble(dpID,value,true);
 }
 
-static void intoyunPlatformWriteDatapointEnum(const uint16_t dpID, int value, bool dpCtrlType)
+void intoyunPlatformWriteDatapointEnum(const uint16_t dpID, int value, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1){
+    if(index == -1) {
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_ENUM){
+    if(properties[index]->dataType != DATA_TYPE_ENUM) {
         return;
-    }else{
-        if(properties[index]->enumValue != value){
+    } else {
+        if(properties[index]->enumValue != value) {
             properties[index]->change = true;
-            if(dpCtrlType){ //用户操作
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
             properties[index]->enumValue = value;
-        }else{
-            if(dpCtrlType){ //用户操作
-                properties[index]->change = false;
+        } else {
+            properties[index]->change = false;
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
-                properties[index]->change = true;
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
     }
 }
 
-void intoyunWriteDatapointEnum(const uint16_t dpID, int value)
+void IOT_DataPoint_WriteEnum(const uint16_t dpID, int value)
 {
     intoyunPlatformWriteDatapointEnum(dpID,value,true);
 }
 
-static void intoyunPlatformWriteDatapointString(const uint16_t dpID, const char *value, bool dpCtrlType)
+void intoyunPlatformWriteDatapointString(const uint16_t dpID, const char *value, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1){
+    if(index == -1) {
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_STRING){
+    if(properties[index]->dataType != DATA_TYPE_STRING) {
         return;
-    }else{
-        if(strcmp(properties[index]->stringValue,value) != 0){
-            log_v("string changed\r\n");
-            log_v("old string=%s\r\n",properties[index]->stringValue);
-            log_v("value=%s\r\n",value);
+    } else {
+        if(strcmp(properties[index]->stringValue,value) != 0) {
             properties[index]->change = true;
-            if(dpCtrlType){ //用户操作
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
-            if(properties[index]->stringValue != NULL){
-                free(properties[index]->stringValue);
-                properties[index]->stringValue = NULL;
-            }
-            properties[index]->stringValue = (char *)malloc(strlen(value)+1);
+            properties[index]->stringValue = (char *)HAL_Malloc(strlen(value)+1);
             strncpy(properties[index]->stringValue,value,strlen(value)+1);
-            log_v("new string=%s\r\n",properties[index]->stringValue);
-        }else{
-            if(dpCtrlType){ //用户操作
-                properties[index]->change = false;
+        } else {
+            properties[index]->change = false;
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
-                properties[index]->change = true;
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
     }
 }
 
-void intoyunWriteDatapointString(const uint16_t dpID, const char *value)
+void IOT_DataPoint_WriteString(const uint16_t dpID, const char *value)
 {
     intoyunPlatformWriteDatapointString(dpID,value,true);
 }
 
-static void intoyunPlatformWriteDatapointBinary(const uint16_t dpID, const uint8_t *value, uint16_t len, bool dpCtrlType)
+void intoyunPlatformWriteDatapointBinary(const uint16_t dpID, const uint8_t *value, uint16_t len, bool dpCtrlType)
 {
     int index = intoyunDiscoverProperty(dpID);
-    if(index == -1){
+    if(index == -1) {
         return;
     }
 
-    if(properties[index]->dataType != DATA_TYPE_BINARY){
+    if(properties[index]->dataType != DATA_TYPE_BINARY) {
         return;
-    }else{
-        if(memcmp(properties[index]->binaryValue.value,value,len) != 0){
+    } else {
+        if(memcmp(properties[index]->binaryValue.value,value,len) != 0) {
             properties[index]->change = true;
-            if(dpCtrlType){ //用户操作
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
 
-            properties[index]->binaryValue.value = (uint8_t *)malloc(len);
-            for(uint16_t i=0;i<len;i++)
-            {
+            properties[index]->binaryValue.value = (uint8_t *)HAL_Malloc(len);
+            for(uint16_t i=0;i<len;i++) {
                 properties[index]->binaryValue.value[i] = value[i];
             }
             properties[index]->binaryValue.len = (uint16_t)len;
-
-        }else{
-            if(dpCtrlType){ //用户操作
-                properties[index]->change = false;
+        } else {
+            properties[index]->change = false;
+            if(dpCtrlType) { //用户操作
                 properties[index]->readFlag = RESULT_DATAPOINT_OLD;
-            }else{
-                properties[index]->change = true;
+            } else {
                 properties[index]->readFlag = RESULT_DATAPOINT_NEW;
             }
         }
     }
 }
 
-void intoyunWriteDatapointBinary(const uint16_t dpID, const uint8_t *value, uint16_t len)
+void IOT_DataPoint_WriteBinary(const uint16_t dpID, const uint8_t *value, uint16_t len)
 {
     intoyunPlatformWriteDatapointBinary(dpID,value,len,true);
 }
 
-void intoyunSendDatapointBool(const uint16_t dpID, bool value)
+int IOT_DataPoint_SendBool(const uint16_t dpID, bool value)
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1){
-        return;
+    if (index == -1) {
+        return -1;
     }
 
     intoyunPlatformWriteDatapointBool(dpID, value, true);
 
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
-        return;
+        return -1;
     }
+
     //只允许下发
-    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
-        return;
+    if( properties[index]->permission == DP_PERMISSION_DOWN_ONLY) {
+        return -1;
     }
-    //数值未发生变化
-    if (!properties[index]->change){
-        return;
-    }
-    intoyunSendSingleDatapoint(index);
+
+    return intoyunSendSingleDatapoint(index);
 }
 
-void intoyunSendDatapointNumberInt32(const uint16_t dpID, int32_t value)
+int IOT_DataPoint_SendNumberInt32(const uint16_t dpID, int32_t value)
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1){
-        return;
+    if(index == -1) {
+        return -1;
     }
 
     intoyunPlatformWriteDatapointNumberInt32(dpID, value, true);
 
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
-        return;
+        return -1;
     }
+
     //只允许下发
-    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
-        return;
+    if( properties[index]->permission == DP_PERMISSION_DOWN_ONLY) {
+        return -1;
     }
-    //数值未发生变化
-    if (!properties[index]->change){
-        return;
-    }
-    intoyunSendSingleDatapoint(index);
+
+    return intoyunSendSingleDatapoint(index);
 }
 
-void intoyunSendDatapointNumberDouble(const uint16_t dpID, double value)
+int IOT_DataPoint_SendNumberDouble(const uint16_t dpID, double value)
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1){
+    if (index == -1) {
         // not found, nothing to do
-        return;
+        return -1;
     }
 
     intoyunPlatformWriteDatapointNumberDouble(dpID, value, true);
 
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
-        return;
+        return -1;
     }
+
     //只允许下发
-    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
-        return;
+    if( properties[index]->permission == DP_PERMISSION_DOWN_ONLY) {
+        return -1;
     }
-    //数值未发生变化
-    if (!properties[index]->change){
-        return;
-    }
-    intoyunSendSingleDatapoint(index);
+
+    return intoyunSendSingleDatapoint(index);
 }
 
-void intoyunSendDatapointEnum(const uint16_t dpID, int value)
+int IOT_DataPoint_SendEnum(const uint16_t dpID, int value)
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1){
+    if(index == -1) {
         // not found, nothing to do
-        return;
+        return -1;
     }
 
     intoyunPlatformWriteDatapointEnum(dpID, value, true);
 
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
-        return;
+        return -1;
     }
+
     //只允许下发
-    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
-        return;
+    if( properties[index]->permission == DP_PERMISSION_DOWN_ONLY) {
+        return -1;
     }
-    //数值未发生变化
-    if (!properties[index]->change){
-        return;
-    }
-    intoyunSendSingleDatapoint(index);
+
+    return intoyunSendSingleDatapoint(index);
 }
 
-void intoyunSendDatapointString(const uint16_t dpID, const char *value)
+int IOT_DataPoint_SendString(const uint16_t dpID, const char *value)
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1){
+    if (index == -1) {
         // not found, nothing to do
-        return;
+        return -1;
     }
 
     intoyunPlatformWriteDatapointString(dpID, value, true);
 
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
-        return;
+        return -1;
     }
+
     //只允许下发
-    if (properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
-        return;
+    if(properties[index]->permission == DP_PERMISSION_DOWN_ONLY) {
+        return -1;
     }
-    //数值未发生变化
-    if (!properties[index]->change){
-        return;
-    }
-    intoyunSendSingleDatapoint(index);
+
+    return intoyunSendSingleDatapoint(index);
 }
 
-void intoyunSendDatapointBinary(const uint16_t dpID, const uint8_t *value, uint16_t len)
+int IOT_DataPoint_SendBinary(const uint16_t dpID, const uint8_t *value, uint16_t len)
 {
     int index = intoyunDiscoverProperty(dpID);
 
-    if (index == -1){
+    if(index == -1) {
         // not found, nothing to do
-        return;
+        return -1;
     }
 
     intoyunPlatformWriteDatapointBinary(dpID, value, len, true);
 
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
-        return;
+        return -1;
     }
+
     //只允许下发
-    if ( properties[index]->permission == DP_PERMISSION_DOWN_ONLY){
-        return;
+    if( properties[index]->permission == DP_PERMISSION_DOWN_ONLY) {
+        return -1;
     }
-    //数值未发生变化
-    if (!properties[index]->change){
-        return;
-    }
-    intoyunSendSingleDatapoint(index);
+
+    return intoyunSendSingleDatapoint(index);
 }
 
-void intoyunParseReceiveDatapoints(const uint8_t *payload, uint32_t len, uint8_t *customData)
+void intoyunParseReceiveDatapoints(const uint8_t *payload, uint32_t len)
 {
-    log_v("receive data length = %d\r\n",len);
-    log_v("receive data:\r\n");
-    log_v_dump((uint8_t *)payload,len);
-
-    //dpid(1-2 bytes)+data type(1 byte)+data len(1-2 bytes)+data(n bytes)
+    //0x31 dpid(1-2 bytes)+data type(1 byte)+data len(1-2 bytes)+data(n bytes)
     //大端表示，如果最高位是1，则表示两个字节，否则是一个字节
     int32_t index = 0;
     uint16_t dpID = 0;
     uint8_t dataType;
     uint16_t dataLength=0;
 
-    if(payload[0] == CUSTOMER_DEFINE_DATA){ //用户透传数据
-        (*customData) = CUSTOMER_DEFINE_DATA;
-        return;
-    }else{
-        (*customData) = INTOYUN_DATAPOINT_DATA;
-    }
-
+    //log_v("payload:");
+    //log_v_dump(payload, len);
     index++;
-
-    while(index < len)
-    {
+    while(index < len) {
         dpID = payload[index++] & 0xff;
-        if(dpID >= 0x80) {//数据点有2个字节
+        if(dpID >= 0x80) {
+            //数据点有2个字节
             dpID = dpID & 0x7f; //去掉最高位
             dpID = (dpID << 8) | payload[index++];
         }
 
         dataType = payload[index++];
-
-        switch(dataType)
-        {
+        switch(dataType) {
             case DATA_TYPE_BOOL:
-            {
-                dataLength = payload[index++] & 0xff;
-                bool value = payload[index++];
-                if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
-                    intoyunPlatformWriteDatapointBool(dpID,value,false);
+                {
+                    dataLength = payload[index++] & 0xff;
+                    bool value = payload[index++];
+                    if(intoyunDiscoverProperty(dpID) != -1) {
+                        //数据点存在
+                        intoyunPlatformWriteDatapointBool(dpID, value, false);
+                    }
                 }
-            }
-            break;
+                break;
 
             case DATA_TYPE_NUM:
-            {
-                dataLength = payload[index++] & 0xff;
-                int32_t value = payload[index++] & 0xff;
-                if(dataLength == 2){
-                    value = (value << 8) | payload[index++];
-                }else if(dataLength == 3){
-                    value = (value << 8) | payload[index++];
-                    value = (value << 8) | payload[index++];
-                }else if(dataLength == 4){
-                    value = (value << 8) | payload[index++];
-                    value = (value << 8) | payload[index++];
-                    value = (value << 8) | payload[index++];
-                }
-
-                uint8_t id = intoyunDiscoverProperty(dpID);
-                if(properties[id]->numberProperty.resolution == 0) {//此数据点为int
-                    value = value + properties[id]->numberProperty.minValue;
-
-                    if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
-                        intoyunPlatformWriteDatapointNumberInt32(dpID,value,false);
+                {
+                    dataLength = payload[index++] & 0xff;
+                    int32_t value = payload[index++] & 0xff;
+                    if(dataLength == 2) {
+                        value = (value << 8) | payload[index++];
+                    } else if(dataLength == 3) {
+                        value = (value << 8) | payload[index++];
+                        value = (value << 8) | payload[index++];
+                    } else if(dataLength == 4) {
+                        value = (value << 8) | payload[index++];
+                        value = (value << 8) | payload[index++];
+                        value = (value << 8) | payload[index++];
                     }
-                }else{
-                    double dValue = (value/(double)_pow(10, properties[id]->numberProperty.resolution)) + properties[id]->numberProperty.minValue;
 
-                    if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
-                        intoyunPlatformWriteDatapointNumberDouble(dpID,dValue,false);
+                    uint8_t id = intoyunDiscoverProperty(dpID);
+                    if(properties[id]->numberProperty.resolution == 0) {
+                        //此数据点为int
+                        value = value + properties[id]->numberProperty.minValue;
+                        if(intoyunDiscoverProperty(dpID) != -1) {
+                            //数据点存在
+                            intoyunPlatformWriteDatapointNumberInt32(dpID,value,false);
+                        }
+                    } else {
+                        double dValue = (value/(double)_pow(10, properties[id]->numberProperty.resolution)) + properties[id]->numberProperty.minValue;
+                        if(intoyunDiscoverProperty(dpID) != -1) {
+                            //数据点存在
+                            intoyunPlatformWriteDatapointNumberDouble(dpID,dValue,false);
+                        }
                     }
                 }
-            }
-            break;
+                break;
 
             case DATA_TYPE_ENUM:
-            {
-                dataLength = payload[index++] & 0xff;
-                int value = payload[index++] & 0xff;
-                if(dataLength == 2){
-                    value = (value << 8) | payload[index++];
-                }else if(dataLength == 3){
-                    value = (value << 8) | payload[index++];
-                    value = (value << 8) | payload[index++];
-                }else if(dataLength == 4){
-                    value = (value << 8) | payload[index++];
-                    value = (value << 8) | payload[index++];
-                    value = (value << 8) | payload[index++];
-                }
+                {
+                    dataLength = payload[index++] & 0xff;
+                    int value = payload[index++] & 0xff;
+                    if(dataLength == 2) {
+                        value = (value << 8) | payload[index++];
+                    } else if(dataLength == 3) {
+                        value = (value << 8) | payload[index++];
+                        value = (value << 8) | payload[index++];
+                    } else if(dataLength == 4) {
+                        value = (value << 8) | payload[index++];
+                        value = (value << 8) | payload[index++];
+                        value = (value << 8) | payload[index++];
+                    }
 
-                if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
-                    intoyunPlatformWriteDatapointEnum(dpID,value,false);
+                    if(intoyunDiscoverProperty(dpID) != -1) {
+                        //数据点存在
+                        intoyunPlatformWriteDatapointEnum(dpID,value,false);
+                    }
                 }
-            }
-            break;
+                break;
 
             case DATA_TYPE_STRING:
-            {
-                dataLength = payload[index++] & 0xff;
-                if(dataLength >= 0x80) {//数据长度有2个字节
-                    dataLength = dataLength & 0x7f;
-                    dataLength = (dataLength) << 8 | payload[index++];
+                {
+                    dataLength = payload[index++] & 0xff;
+                    if(dataLength >= 0x80) {
+                        //数据长度有2个字节
+                        dataLength = dataLength & 0x7f;
+                        dataLength = (dataLength) << 8 | payload[index++];
+                    }
+                    char *str = (char *)HAL_Malloc(dataLength+1);
+                    if(NULL != str) {
+                        memset(str, 0, dataLength+1);
+                        memcpy(str, &payload[index], dataLength);
+                    }
+                    index += dataLength;
+                    if(intoyunDiscoverProperty(dpID) != -1) {
+                        //数据点存在
+                        intoyunPlatformWriteDatapointString(dpID,str,false);
+                    }
+                    free(str);
                 }
-                char *str = (char *)malloc(dataLength+1);
-                if(NULL != str){
-                    memset(str, 0, dataLength+1);
-                    memcpy(str, &payload[index], dataLength);
-                }
-
-                index += dataLength;
-                if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
-                    intoyunPlatformWriteDatapointString(dpID,str,false);
-                }
-                free(str);
-            }
-            break;
+                break;
 
             case DATA_TYPE_BINARY:
-            {
-                dataLength = payload[index++] & 0xff;
-                if(dataLength >= 0x80) {//数据长度有2个字节
-                    dataLength = dataLength & 0x7f;
-                    dataLength = (dataLength) << 8 | payload[index++];
+                {
+                    dataLength = payload[index++] & 0xff;
+                    if(dataLength >= 0x80) {
+                        //数据长度有2个字节
+                        dataLength = dataLength & 0x7f;
+                        dataLength = (dataLength) << 8 | payload[index++];
+                    }
+
+                    if(intoyunDiscoverProperty(dpID) != -1) {
+                        //数据点存在
+                        intoyunPlatformWriteDatapointBinary(dpID, &payload[index], dataLength,false);
+                    }
+
+                    index += dataLength;
                 }
-                if(intoyunDiscoverProperty(dpID) != -1){//数据点存在
-                    intoyunPlatformWriteDatapointBinary(dpID, &payload[index], dataLength,false);
-                }
-                index += dataLength;
-            }
-            break;
+                break;
 
             default:
                 break;
         }
     }
-
+    bool dpReset = false;
     bool dpGetAllDatapoint = false;
-    if (RESULT_DATAPOINT_NEW == intoyunReadDatapointBool(DPID_DEFAULT_BOOL_GETALLDATAPOINT, &dpGetAllDatapoint)) {
-        log_v("datapoint refresh\r\n");
-        intoyunSendDatapointAll(true);
+    if (RESULT_DATAPOINT_NEW == IOT_DataPoint_ReadBool(DPID_DEFAULT_BOOL_RESET, &dpReset)) {
+        HAL_SystemReboot();
+    } else if (RESULT_DATAPOINT_NEW == IOT_DataPoint_ReadBool(DPID_DEFAULT_BOOL_GETALLDATAPOINT, &dpGetAllDatapoint)) {
+        IOT_DataPoint_SendAll(true);
     }
 }
 
@@ -1123,15 +769,14 @@ static uint16_t intoyunFormDataPointBinary(int property_index, uint8_t* buffer)
 {
     int32_t index = 0;
 
-    if(properties[property_index]->dpID < 0x80){
+    if(properties[property_index]->dpID < 0x80) {
         buffer[index++] = properties[property_index]->dpID & 0xFF;
-    }else{
+    } else {
         buffer[index++] = (properties[property_index]->dpID >> 8) | 0x80;
         buffer[index++] = properties[property_index]->dpID & 0xFF;
     }
 
-    switch(properties[property_index]->dataType)
-    {
+    switch(properties[property_index]->dataType) {
         case DATA_TYPE_BOOL:       //bool型
             buffer[index++] = 0x00;  //类型
             buffer[index++] = 0x01;  //长度
@@ -1142,11 +787,11 @@ static uint16_t intoyunFormDataPointBinary(int property_index, uint8_t* buffer)
             {
                 buffer[index++] = 0x01;
                 int32_t value;
-                if(properties[property_index]->numberProperty.resolution == 0){
+                if(properties[property_index]->numberProperty.resolution == 0) {
                     value = (int32_t)properties[property_index]->numberIntValue;
-                }else{
+                } else {
                     value = (properties[property_index]->numberDoubleValue - properties[property_index]->numberProperty.minValue) \
-                        * _pow(10, properties[property_index]->numberProperty.resolution);
+                            * _pow(10, properties[property_index]->numberProperty.resolution);
                 }
 
                 if(value & 0xFFFF0000) {
@@ -1177,9 +822,9 @@ static uint16_t intoyunFormDataPointBinary(int property_index, uint8_t* buffer)
                 uint16_t strLength = strlen(properties[property_index]->stringValue);
 
                 buffer[index++] = 0x03;
-                if(strLength < 0x80){
+                if(strLength < 0x80) {
                     buffer[index++] = strLength & 0xFF;
-                }else{
+                } else {
                     buffer[index++] = (strLength >> 8) | 0x80;
                     buffer[index++] = strLength & 0xFF;
                 }
@@ -1214,7 +859,7 @@ static uint16_t intoyunFormSingleDatapoint(int property_index, uint8_t *buffer, 
 {
     int32_t index = 0;
 
-    buffer[index++] = INTOYUN_DATAPOINT_DATA;
+    buffer[index++] = 0x31;
     index += intoyunFormDataPointBinary(property_index, buffer+index);
     return index;
 }
@@ -1225,120 +870,101 @@ static uint16_t intoyunFormAllDatapoint(uint8_t *buffer, uint16_t len, bool dpFo
 {
     int32_t index = 0;
 
-    buffer[index++] = INTOYUN_DATAPOINT_DATA;
-    for (int i = 0; i < properties_count; i++)
-    {
+    buffer[index++] = 0x31;
+    for (int i = 0; i < properties_count; i++) {
         //只允许下发  不上传
-        if (properties[i]->permission == DP_PERMISSION_DOWN_ONLY){
+        if (properties[i]->permission == DP_PERMISSION_DOWN_ONLY) {
             continue;
         }
+
         //系统默认dpID  不上传
-        if (properties[i]->dpID > 0x3F00){
+        if (properties[i]->dpID > 0x3F00) {
             continue;
         }
-        if( dpForm || ((!dpForm) && properties[i]->change) ){
+
+        if( dpForm || ((!dpForm) && properties[i]->change) ) {
             index += intoyunFormDataPointBinary(i, (uint8_t *)buffer+index);
         }
     }
     return index;
 }
 
-//发送单个数据点的数据
-static void intoyunSendSingleDatapoint(const uint16_t dpID)
+//发送数据
+int intoyunTransmitData(const uint8_t *buffer, uint16_t len)
 {
-    //发送时间间隔到
-    uint32_t current_millis = millis();
-    int32_t elapsed_millis = current_millis - g_datapoint_control.runtime;
-    if (elapsed_millis < 0){
-        elapsed_millis =  0xFFFFFFFF - g_datapoint_control.runtime + current_millis;
-    }
+    int result = IOT_Comm_SendData(buffer, len);
+    return result? 0 : 1;
+}
 
-    if (elapsed_millis >= g_datapoint_control.datapoint_transmit_lapse*1000){
-        uint8_t buffer[256];
-        uint16_t len;
+//发送单个数据点的数据
+int intoyunSendSingleDatapoint(const uint16_t dpID)
+{
+    uint8_t buffer[256];
+    uint16_t len;
 
-        len = intoyunFormSingleDatapoint(dpID, buffer, sizeof(buffer));
-        intoyunTransmitData(buffer,len);
-        g_datapoint_control.runtime = current_millis;
-    }
+    len = intoyunFormSingleDatapoint(dpID, buffer, sizeof(buffer));
+    return intoyunTransmitData(buffer,len);
 }
 
 //发送所有数据点的数据
-static void intoyunSendDatapointAll(bool dpForm)
+int IOT_DataPoint_SendAll(bool dpForm)
 {
     uint8_t buffer[512];
     uint16_t len;
 
-    if(0 == intoyunGetPropertyPermissionUpCount()) {
-        return;
-    }
-
     len = intoyunFormAllDatapoint(buffer, sizeof(buffer), dpForm);
-
-    log_v("send data length = %d\r\n",len);
-    log_v("send data:\r\n");
-    log_v_dump(buffer,len);
-
-    intoyunTransmitData(buffer,len);
+    return intoyunTransmitData(buffer,len);
 }
 
-void intoyunSendAllDatapointManual(void)
+int intoyunSendAllDatapointManual(void)
 {
     if(0 == intoyunGetPropertyCount()) {
-        return;
-    }
-
-    if(0 == intoyunGetPropertyPermissionUpCount()) {
-        return;
+        return -1;
     }
 
     if(DP_TRANSMIT_MODE_AUTOMATIC == intoyunGetDatapointTransmitMode()) {
-        return;
+        return -1;
     }
 
-    intoyunSendDatapointAll(true);
     intoyunPropertyChangeClear();
+    return IOT_DataPoint_SendAll(true);
 }
 
-void intoyunSendDatapointAutomatic(void)
+int intoyunSendDatapointAutomatic(void)
 {
     bool sendFlag = false;
 
     if(0 == intoyunGetPropertyCount()) {
-        return;
-    }
-
-    if(0 == intoyunGetPropertyPermissionUpCount()) {
-        return;
+        return -1;
     }
 
     if(DP_TRANSMIT_MODE_MANUAL == intoyunGetDatapointTransmitMode()) {
-        return;
+        return -1;
     }
 
     //当数值发生变化
-    if(intoyunPropertyChanged()){
+    if(intoyunPropertyChanged()) {
         sendFlag = true;
-        intoyunSendDatapointAll(false);
-    }else{
+    } else {
         //发送时间间隔到
-        uint32_t current_millis = millis();
+        uint32_t current_millis = HAL_UptimeMs();
         int32_t elapsed_millis = current_millis - g_datapoint_control.runtime;
-        if (elapsed_millis < 0){
+
+        if (elapsed_millis < 0) {
             elapsed_millis =  0xFFFFFFFF - g_datapoint_control.runtime + current_millis;
         }
-
         //发送时间时间到
-        if ( elapsed_millis >= g_datapoint_control.datapoint_transmit_lapse*1000 ){
+        if ( elapsed_millis >= g_datapoint_control.datapoint_transmit_lapse*1000 ) {
             sendFlag = true;
-            intoyunSendDatapointAll(true);
         }
     }
 
-    if(sendFlag){
-        g_datapoint_control.runtime = millis();
+    if(sendFlag) {
+        g_datapoint_control.runtime = HAL_UptimeMs();
         intoyunPropertyChangeClear();
+        return IOT_DataPoint_SendAll(true);
     }
+    return -1;
 }
 
 #endif

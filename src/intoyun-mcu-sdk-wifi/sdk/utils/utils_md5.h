@@ -1,42 +1,94 @@
 /*
- * MD5 internal definitions
- * Copyright (c) 2003-2005, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2013-2018 Molmc Group. All rights reserved.
+ * License-Identifier: Apache-2.0
  *
- * This software may be distributed under the terms of the BSD license.
- * See README for more details.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 
-#ifndef INTOYUN_MD5_H_
-#define INTOYUN_MD5_H_
+#ifndef __UTILS_MD5_H__
+#define __UTILS_MD5_H__
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
+#include "iot_import.h"
 
-#ifdef __cplusplus
-extern "C" {
+typedef struct {
+    uint32_t total[2];          /*!< number of bytes processed  */
+    uint32_t state[4];          /*!< intermediate digest state  */
+    unsigned char buffer[64];   /*!< data block being processed */
+} iot_md5_context;
+
+/**
+ * \brief          Initialize MD5 context
+ *
+ * \param ctx      MD5 context to be initialized
+ */
+void utils_md5_init(iot_md5_context *ctx);
+
+/**
+ * \brief          Clear MD5 context
+ *
+ * \param ctx      MD5 context to be cleared
+ */
+void utils_md5_free(iot_md5_context *ctx);
+
+/**
+ * \brief          Clone (the state of) an MD5 context
+ *
+ * \param dst      The destination context
+ * \param src      The context to be cloned
+ */
+void utils_md5_clone(iot_md5_context *dst,
+                     const iot_md5_context *src);
+
+/**
+ * \brief          MD5 context setup
+ *
+ * \param ctx      context to be initialized
+ */
+void utils_md5_starts(iot_md5_context *ctx);
+
+/**
+ * \brief          MD5 process buffer
+ *
+ * \param ctx      MD5 context
+ * \param input    buffer holding the  data
+ * \param ilen     length of the input data
+ */
+void utils_md5_update(iot_md5_context *ctx, const unsigned char *input, size_t ilen);
+
+/**
+ * \brief          MD5 final digest
+ *
+ * \param ctx      MD5 context
+ * \param output   MD5 checksum result
+ */
+void utils_md5_finish(iot_md5_context *ctx, unsigned char output[16]);
+
+/* Internal use */
+void utils_md5_process(iot_md5_context *ctx, const unsigned char data[64]);
+
+/**
+ * \brief          Output = MD5( input buffer )
+ *
+ * \param input    buffer holding the  data
+ * \param ilen     length of the input data
+ * \param output   MD5 checksum result
+ */
+void utils_md5(const unsigned char *input, size_t ilen, unsigned char output[16]);
+
+
+int8_t utils_hb2hex(uint8_t hb);
+
+
 #endif
 
-
-struct MD5Context {
-    uint32_t buf[4];
-    uint32_t bits[2];
-    uint8_t  in[64];
-};
-
-void md5_begin(void);
-void md5_add(uint8_t * data, uint16_t len);
-void md5_calculate(void);
-void md5_output(uint8_t *data, uint16_t len, char *signature);
-int md5_vector(size_t num_elem, const uint8_t *addr[], const size_t *len, uint8_t *mac);
-void MD5Init(struct MD5Context *context);
-void MD5Update(struct MD5Context *context, uint8_t const *buf, uint32_t len);
-void MD5Final(uint8_t digest[16], struct MD5Context *context);
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-#endif

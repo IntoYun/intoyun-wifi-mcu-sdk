@@ -1,18 +1,32 @@
-#include "intoyun_key.h"
-#include "intoyun_log.h"
-#include "intoyun_config.h"
-#include "intoyun_interface.h"
+/*
+ * Copyright (c) 2013-2018 Molmc Group. All rights reserved.
+ * License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
-#ifdef CONFIG_INTOYUN_KEY
+#include "iotx_key_api.h"
+#include "iot_import.h"
 
-static key_param_t keyParams = {0,20,600,1000,1,0,false,0,0};
+static iotx_key_param_t keyParams = {0,20,600,1000,1,0,false,0,0};
 static uint8_t keyNumRecord = 0;  //记录按下了的按键编号
-static key_t *keyListHead = NULL;
+static iotx_key_t *keyListHead = NULL;
 static bool keyListInitFlag = false;
 
 static void KeyListInit(void)
 {
-    keyListHead = (key_t*)malloc(sizeof(key_t));
+    keyListHead = (iotx_key_t*)malloc(sizeof(iotx_key_t));
     if(keyListHead == NULL){
         return;
     }
@@ -20,9 +34,9 @@ static void KeyListInit(void)
 }
 
 //该按键是否存在
-static bool KeyExists( key_t *obj )
+static bool KeyExists( iotx_key_t *obj )
 {
-    key_t* cur = keyListHead->next;
+    iotx_key_t* cur = keyListHead->next;
 
     while( cur != NULL )
     {
@@ -36,13 +50,13 @@ static bool KeyExists( key_t *obj )
 }
 
 //按键插入
-static void KeyListInsert(key_t *obj)
+static void KeyListInsert(iotx_key_t *obj)
 {
-    key_t *head = keyListHead;
-    key_t *cur = keyListHead->next;
+    iotx_key_t *head = keyListHead;
+    iotx_key_t *cur = keyListHead->next;
 
     if( ( obj == NULL ) || ( KeyExists( obj ) == true ) ){
-        log_v("key is exists\r\n");
+        //log_v("key is exists\r\n");
         return;
     }
 
@@ -60,7 +74,7 @@ static void KeyListInsert(key_t *obj)
 
 static bool KeyListQueryDoubleClickCb(uint8_t num)
 {
-    key_t *cur = keyListHead->next;
+    iotx_key_t *cur = keyListHead->next;
     while(cur != NULL){
         if( cur->keyNum == num)
         {
@@ -76,7 +90,7 @@ static bool KeyListQueryDoubleClickCb(uint8_t num)
 //查找按键 注册按键回调
 static void KeyListRegisterCbFunc(uint8_t cbType, uint8_t num, cbPressFunc cbFunc, cbClickFunc clickFunc)
 {
-    key_t *cur = keyListHead->next;
+    iotx_key_t *cur = keyListHead->next;
     while(cur != NULL){
         if( cur->keyNum == num)
         {
@@ -107,7 +121,7 @@ static void KeyListRegisterCbFunc(uint8_t cbType, uint8_t num, cbPressFunc cbFun
 //执行按键回调函数
 static void KeyListExeCbFunc(uint8_t cbType, uint8_t num, uint32_t ms)
 {
-    key_t *cur = keyListHead->next;
+    iotx_key_t *cur = keyListHead->next;
     while(cur != NULL){
         if( cur->keyNum == num)
         {
@@ -147,7 +161,7 @@ static void KeyListExeCbFunc(uint8_t cbType, uint8_t num, uint32_t ms)
 //获取键值
 static int KeyListGetValue(void)
 {
-    key_t *cur = keyListHead->next;
+    iotx_key_t *cur = keyListHead->next;
     while(cur != NULL){
         if(cur->cbKeyGetValueFunc() == keyParams._buttonPressed){
             keyNumRecord = cur->keyNum; //记录哪个按键按下了
@@ -158,9 +172,9 @@ static int KeyListGetValue(void)
     return keyParams._buttonReleased;
 }
 
-void intoyunKeyInit(void)
+void IOT_KEY_Init(void)
 {
-    key_t* cur = keyListHead->next;
+    iotx_key_t* cur = keyListHead->next;
 
     while( cur != NULL )
     {
@@ -171,7 +185,7 @@ void intoyunKeyInit(void)
     }
 }
 
-void intoyunKeySetParams(bool invert, uint32_t debounceTime, uint32_t clickTime, uint32_t pressTime)
+void IOT_KEY_SetParams(bool invert, uint32_t debounceTime, uint32_t clickTime, uint32_t pressTime)
 {
     if(!invert) {
         keyParams._buttonPressed = 0;
@@ -188,16 +202,16 @@ void intoyunKeySetParams(bool invert, uint32_t debounceTime, uint32_t clickTime,
     keyParams._stopTime = 0;
 }
 
-void intoyunKeyRegister(uint8_t num, cbInitFunc initFunc, cbGetValueFunc getValFunc)
+void IOT_KEY_Register(uint8_t num, cbInitFunc initFunc, cbGetValueFunc getValFunc)
 {
     if(!keyListInitFlag){
         keyListInitFlag = true;
         KeyListInit();
     }
 
-    key_t *p = (key_t*)malloc(sizeof(key_t));
+    iotx_key_t *p = (iotx_key_t*)malloc(sizeof(iotx_key_t));
     if(p == NULL){
-        log_v("error malloc\r\n");
+        //log_v("error malloc\r\n");
         return;
     }
     p->keyNum= num;
@@ -210,46 +224,45 @@ void intoyunKeyRegister(uint8_t num, cbInitFunc initFunc, cbGetValueFunc getValF
     p->cbKeyPressDuringFunc = NULL;
     p->next = NULL;
 
-    log_v("keyNum=%d\r\n",p->keyNum);
-
+    //log_v("keyNum=%d\r\n",p->keyNum);
     KeyListInsert(p);
 }
 
 //单击
-void intoyunKeyClickCb(uint8_t num, cbClickFunc cbFunc)
+void IOT_KEY_ClickCb(uint8_t num, cbClickFunc cbFunc)
 {
     KeyListRegisterCbFunc(KEY_CLICK_CB, num, NULL, cbFunc);
 }
 
 //双击
-void intoyunKeyDoubleClickCb(uint8_t num, cbClickFunc cbFunc)
+void IOT_KEY_DoubleClickCb(uint8_t num, cbClickFunc cbFunc)
 {
     KeyListRegisterCbFunc(KEY_DOUBLE_CLICK_CB, num, NULL, cbFunc);
 }
 
 //长按键开始按下
-void intoyunKeyPressStartCb(uint8_t num, cbPressFunc cbFunc)
+void IOT_KEY_PressStartCb(uint8_t num, cbPressFunc cbFunc)
 {
     KeyListRegisterCbFunc(KEY_PRESS_SATRT_CB, num, cbFunc, NULL);
 }
 
 //长按键松开
-void intoyunKeyPressStopCb(uint8_t num, cbPressFunc cbFunc)
+void IOT_KEY_PressStopCb(uint8_t num, cbPressFunc cbFunc)
 {
     KeyListRegisterCbFunc(KEY_PRESS_STOP_CB, num, cbFunc, NULL);
 }
 
 //按键一直长按
-void intoyunKeyPressDuringCb(uint8_t num, cbPressFunc cbFunc)
+void IOT_KEY_PressDuringCb(uint8_t num, cbPressFunc cbFunc)
 {
     KeyListRegisterCbFunc(KEY_PRESS_DURING_CB, num, cbFunc, NULL);
 }
 
-void intoyunKeyLoop(void)
+void IOT_KEY_Loop(void)
 {
     // Detect the input information
     int buttonLevel = KeyListGetValue(); // current button signal.
-    uint32_t now = millis(); // current (relative) time in msecs.
+    uint32_t now = HAL_UptimeMs(); // current (relative) time in msecs.
 
     // Implementation of the state machine
     if (keyParams._state == 0) {  // waiting for menu pin being pressed.
@@ -303,4 +316,3 @@ void intoyunKeyLoop(void)
     }
 }
 
-#endif

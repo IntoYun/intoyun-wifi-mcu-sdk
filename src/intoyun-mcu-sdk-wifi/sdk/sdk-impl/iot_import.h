@@ -19,20 +19,22 @@
 #ifndef __IOT_IMPORT_H__
 #define __IOT_IMPORT_H__
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <inttypes.h>
 
-#include "hal_import.h"
+#include "hal_interface.h"
 #include "sdk_config.h"
+#include "iotx_log_api.h"
 
-#if defined(__cplusplus)
+#ifdef __cplusplus
 }
 #endif
 

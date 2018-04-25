@@ -1,5 +1,4 @@
 #include "stm32f1xx_hal.h"
-#include "intoyun_protocol.h"
 
 UART_HandleTypeDef huart1; //USART1用于与模组通讯
 UART_HandleTypeDef huart2; //USART2 用于打印调试信息
@@ -77,7 +76,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
         GPIO_InitStruct.Pin = GPIO_PIN_9;
         GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
         GPIO_InitStruct.Pull = GPIO_PULLUP;
-        GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
         GPIO_InitStruct.Pin = GPIO_PIN_10;
@@ -101,7 +100,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
         GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
         GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
         GPIO_InitStruct.Pull = GPIO_PULLUP;
-        GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     }
 }
@@ -125,7 +124,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     }
 }
 
-
 void HAL_SystemInit(void)
 {
     HAL_Init();
@@ -140,6 +138,21 @@ uint32_t HAL_Millis(void)
     return HAL_GetTick();
 }
 
+uint32_t HAL_UptimeMs(void)
+{
+    return HAL_GetTick();
+}
+
+void *HAL_Malloc(uint32_t size)
+{
+    return malloc(size);
+}
+
+void HAL_Free(void *ptr)
+{
+    free(ptr);
+}
+
 //串口发送数据到模组
 void HAL_UartWrite(uint8_t c)
 {
@@ -147,14 +160,13 @@ void HAL_UartWrite(uint8_t c)
     HAL_UART_Transmit(&huart1, &data, 1, 100);
 }
 
-
 void HAL_Print(char *data, uint16_t len)
 {
     int n;
     uint8_t tmp = 0;
-    for(n=0; n<len; n++)
-    {
+    for(n=0; n<len; n++) {
         tmp = data[n];
         HAL_UART_Transmit(&huart2, &tmp, 1, 100);
     }
 }
+

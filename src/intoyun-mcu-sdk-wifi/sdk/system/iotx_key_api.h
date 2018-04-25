@@ -1,21 +1,20 @@
-/**
- ******************************************************************************
-  Copyright (c) 2013-2014 IntoRobot Team.  All right reserved.
-
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation, either
-  version 3 of the License, or (at your option) any later version.
-
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, see <http://www.gnu.org/licenses/>.
-  ******************************************************************************
-*/
+/*
+ * Copyright (c) 2013-2018 Molmc Group. All rights reserved.
+ * License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
 #ifndef __IOTX_KEY_API_H__
 #define __IOTX_KEY_API_H__
@@ -48,7 +47,7 @@ typedef struct key_cb_s {
     cbPressFunc cbKeyPressStopFunc; //按键松开回调
     cbPressFunc cbKeyPressDuringFunc; //按键长按间隔回调
     struct key_cb_s *next;
-}key_t;
+} iotx_key_t;
 
 typedef struct key_param_s{
     uint8_t    _state;
@@ -60,7 +59,7 @@ typedef struct key_param_s{
     bool       _isLongPressed;
     uint32_t   _startTime;
     uint32_t   _stopTime;
-}key_param_t;
+} iotx_key_param_t;
 
 enum keyCbFuncType{
     KEY_CLICK_CB        = 1,
@@ -70,17 +69,15 @@ enum keyCbFuncType{
     KEY_PRESS_DURING_CB = 5,
 };
 
-
-void intoyunKeyInit(void);
-void intoyunKeySetParams(bool invert, uint32_t debounceTime, uint32_t clickTime, uint32_t pressTime);
-void intoyunKeyRegister(uint8_t num, cbInitFunc initFunc, cbGetValueFunc getValFunc);
-void intoyunKeyClickCb(uint8_t num, cbClickFunc cbFunc);
-void intoyunKeyDoubleClickCb(uint8_t num, cbClickFunc cbFunc);
-void intoyunKeyPressStartCb(uint8_t num, cbPressFunc cbFunc);
-void intoyunKeyPressStopCb(uint8_t num, cbPressFunc cbFunc);
-void intoyunKeyPressDuringCb(uint8_t num, cbPressFunc cbFunc);
-void intoyunKeyLoop(void);
-
+void IOT_KEY_Init(void);
+void IOT_KEY_SetParams(bool invert, uint32_t debounceTime, uint32_t clickTime, uint32_t pressTime);
+void IOT_KEY_Register(uint8_t num, cbInitFunc initFunc, cbGetValueFunc getValFunc);
+void IOT_KEY_ClickCb(uint8_t num, cbClickFunc cbFunc);
+void IOT_KEY_DoubleClickCb(uint8_t num, cbClickFunc cbFunc);
+void IOT_KEY_PressStartCb(uint8_t num, cbPressFunc cbFunc);
+void IOT_KEY_PressStopCb(uint8_t num, cbPressFunc cbFunc);
+void IOT_KEY_PressDuringCb(uint8_t num, cbPressFunc cbFunc);
+void IOT_KEY_Loop(void);
 
 #ifdef __cplusplus
 }

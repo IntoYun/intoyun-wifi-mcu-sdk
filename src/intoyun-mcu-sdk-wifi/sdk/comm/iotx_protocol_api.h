@@ -1,21 +1,20 @@
-/**
- ******************************************************************************
-  Copyright (c) 2013-2014 IntoRobot Team.  All right reserved.
-
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation, either
-  version 3 of the License, or (at your option) any later version.
-
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
-
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, see <http://www.gnu.org/licenses/>.
-  ******************************************************************************
-*/
+/*
+ * Copyright (c) 2013-2018 Molmc Group. All rights reserved.
+ * License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
 //AT指令协议数据处理
 #ifndef __IOTX_PROTOCOL_API_H__
@@ -34,33 +33,12 @@ extern "C"
 {
 #endif
 
-typedef enum
-{
-    event_mode_changed   = 1,
-    event_network_status = 2,
-    event_cloud_data     = 3,
-} system_event_t;
-
-enum SystemEventsParam {
-    //mode change
-    ep_mode_normal                     = 1, //正常工作模式
-    ep_mode_imlink_config              = 2, //imlink配置模式
-    ep_mode_ap_config                  = 3, //ap配置模式
-    ep_mode_binding                    = 4,
-
-    //network status
-    ep_network_status_disconnected     = 1, //已断开路由器
-    ep_network_status_connected        = 2, //已连接路由器
-
-    //Cloud connection status
-    ep_cloud_status_disconnected       = 3, //已断开连服务器
-    ep_cloud_status_connected          = 4, //已连服务器
-
-    //cloud data
-    ep_cloud_data_raw                  = 1, //原始数据 事件
-    ep_cloud_data_datapoint            = 2, //数据点数据协议处理 事件
-    ep_cloud_data_custom               = 3, //自定义数据协议处理 事件
-};
+typedef struct{
+    char module_version[20];//模组版本号
+    char module_type[10];//模组类型
+    char device_id[32];//设备ID
+    uint8_t at_mode;//注册类型
+} module_info_t;
 
 /** WiFi 模组状态*/
 typedef enum
@@ -68,8 +46,7 @@ typedef enum
     MODULE_DISCONNECT_ROUTER = 1,  //未连接路由器
     MODULE_CONNECT_ROUTER,         //已连接路由器,未连接服务器
     MODULE_CONNECT_SERVER,         //已连接路由并连接服务器
-}module_status_type_t;
-
+} module_status_type_t;
 
 /** WiFi模组工作模式*/
 typedef enum
@@ -78,8 +55,7 @@ typedef enum
     MODE_IMLINK_CONFIG,     //ImLink配置模式
     MODE_AP_CONFIG,         //为AP配置模式
     MODE_BINDING,           //绑定模式
-}mode_type_t;
-
+} mode_type_t;
 
 typedef enum {
     WIFIMODE_STATION            = 1,
@@ -190,20 +166,6 @@ typedef uint32_t MDM_IP;
 
 #define MACSTR           "%x:%x:%x:%x:%x:%x"
 
-
-typedef struct{
-    char module_version[20];//模组版本号
-    char module_type[10];//模组类型
-    char device_id[32];//设备ID
-    uint8_t at_mode;//注册类型
-    char product_id[32];//产品ID
-    char product_secret[32];//产品秘钥
-    char hardware_version[10];//板子硬件版本
-    char software_version[10];//板子软件版本
-    char activation_code[32];//设备激活码
-    char access_token[32];//设备秘钥
-}device_info_t;
-
 typedef struct
 {
     char ssid[33];
@@ -211,18 +173,18 @@ typedef struct
     uint8_t channel;
     int rssi;        // when scanning
     MDM_IP  ipAddr;  // byte 0 is MSB, byte 3 is LSB
-}wifi_info_t;
+} wifi_info_t;
 
 typedef struct{
     module_status_type_t module_status;
     wifi_info_t wifi;
-}module_status_t;
+} module_status_t;
 
 typedef struct{
     uint8_t status;
     char net_time[32];
     char timestamp[16];
-}network_time_t;
+} network_time_t;
 
 typedef struct{
     int zone;
@@ -231,7 +193,7 @@ typedef struct{
     char register_domain[32];
     int register_port;
     char update_domain[32];
-}basic_params_t;
+} basic_params_t;
 
 typedef int (*callbackPtr)(int type, const char *buf, int len, void *param);
 
@@ -243,8 +205,8 @@ bool ProtocolParserInit(void);
 void ProtocolPutPipe(uint8_t c);
 bool ProtocolExecuteRestart(void);
 bool ProtocolExecuteRestore(void);
-bool ProtocolQueryInfo(device_info_t *info);
-bool ProtocolQueryDevice(device_info_t *info);
+bool ProtocolQueryInfo(module_info_t *info);
+bool ProtocolQueryDevice(module_info_t *info);
 bool ProtocolSetupDevice(char *product_id, char *hardware_version, char *software_version);
 bool ProtocolQueryJoinAP(module_status_t *status);
 bool ProtocolSetupJoinAP(char *ssid,char *pwd);

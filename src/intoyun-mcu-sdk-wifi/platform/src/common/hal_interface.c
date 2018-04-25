@@ -4,6 +4,16 @@ void HAL_SystemInit(void)
 {
 }
 
+void *HAL_Malloc(uint32_t size)
+{
+    return malloc(size);
+}
+
+void HAL_Free(void *ptr)
+{
+    free(ptr);
+}
+
 //获取系统滴答定时器计数值 单位ms
 uint32_t HAL_Millis(void)
 {

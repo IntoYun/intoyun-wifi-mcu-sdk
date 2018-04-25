@@ -1,41 +1,37 @@
-/**
- ******************************************************************************
- Copyright (c) 2013-2014 IntoRobot Team.  All right reserved.
-
- This library is free software; you can redistribute it and/or
- modify it under the terms of the GNU Lesser General Public
- License as published by the Free Software Foundation, either
- version 3 of the License, or (at your option) any later version.
-
- This library is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- Lesser General Public License for more details.
-
- You should have received a copy of the GNU Lesser General Public
- License along with this library; if not, see <http://www.gnu.org/licenses/>.
- ******************************************************************************
+/*
+ * Copyright (c) 2013-2018 Molmc Group. All rights reserved.
+ * License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  */
 
-#ifndef INTOYUN_CONFIG_H_
-#define INTOYUN_CONFIG_H_
+#ifndef __SDK_CONFIG_H__
+#define __SDK_CONFIG_H__
 
-#define SDK_VERSION                               "1.1.0"
+#define SDK_VERSION                        "1.1.0"
 
-#define INTOYUN_DEBUG_LEVEL                       5 //调试信息输出等级
-#define PROPERTIES_MAX                            50 //数据点个数大小
+#define CONFIG_CLOUD_DATAPOINT_ENABLED     1   //是否使能数据点通讯接口
+#define CONFIG_KEY_ENABLE                  1   //是否按键接口功能
+#define CONFIG_TIMER_ENABLE                1   //是否定时器接口功能
 
-#define PIPE_MAX_SIZE                             256 //串口接收缓冲区大小
-#define DATAPOINT_TRANSMIT_AUTOMATIC_INTERVAL     20 //数据点自动发送时间间隔设置
+// 数据点相关配置
+#define CONFIG_PROPERTIES_MAX              50  //支持的数据点的最大个数
+#define CONFIG_AUTOMATIC_INTERVAL          600 //数据点自动发送默认时间间隔
 
-//注释掉将不使用数据点解析功能
-#define CONFIG_INTOYUN_DATAPOINT
+#define PIPE_MAX_SIZE                      256 //串口接收缓冲区大小
 
-//注释掉将不使用按键功能
-#define CONFIG_INTOYUN_KEY
-
-//注释掉将不使用定时器回调功能
-#define CONFIG_INTOYUN_TIMER
+#define INTOYUN_DEBUG_LEVEL                5   //调试信息输出等级
 
 #define CONFIG_NOASSERT
 

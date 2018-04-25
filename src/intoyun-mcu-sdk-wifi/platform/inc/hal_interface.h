@@ -35,7 +35,7 @@ void HAL_Free(void *ptr);
  */
 uint32_t HAL_UptimeMs(void);
 
-
+void HAL_SystemInit(void);
 uint32_t HAL_Millis(void);
 void HAL_UartWrite(uint8_t c);
 void HAL_Print(char *data, uint16_t len);

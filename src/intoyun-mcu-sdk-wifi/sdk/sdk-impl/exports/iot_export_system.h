@@ -33,8 +33,16 @@ typedef struct
     void (*init)(void);
     void (*loop)(void);
     //应用操作接口
-    void (*setDeviceInfo)(char *productID, char *productSecret, char *hardwareVersion, char *softwareVersion, char *deviceId, char *deviceSecret);
     void (*setEventCallback)(event_handler_t handler);
+    bool (*setModuleMode)(mode_type_t mode, uint32_t timeout);
+    mode_type_t (*getModuleMode)(void);
+    void (*setDeviceInfo)(char *productId, char *productSecret, char *hardVer, char *softVer);     //设置设备信息
+    void (*getModuleInfo)(char *moduleVersion, char *moduleType, char *deviceId, uint8_t *atMode); //获取模块信息
+    bool (*resetModule)(void);
+    bool (*restoreModule)(void);
+    void (*putPipe)(uint8_t value);
+    bool (*getNetTime)(char *net_time, char *timestamp);
+    uint8_t (*getStatus)(char *ssid, uint32_t *ipAddr, int *rssi);
     void (*setDatapointControl)(dp_transmit_mode_t mode, uint32_t lapse);
 } iot_system_if_t;
 
