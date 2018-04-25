@@ -141,9 +141,11 @@ int IOT_Comm_SendData(const uint8_t *data, uint16_t datalen)
 
 int IOT_Comm_Yield(void)
 {
+#if CONFIG_CLOUD_DATAPOINT_ENABLED == 1
     if(IOT_Comm_IsConnected()) {
         IOT_DataPoint_SendDatapointAutomatic();
     }
+#endif
 
     IOT_Protocol_loop();
     return 0;

@@ -85,7 +85,7 @@ const iot_system_if_t System =
     IOT_SYSTEM_GetNetTime,
     IOT_SYSTEM_GetStatus,
 #if CONFIG_CLOUD_DATAPOINT_ENABLED == 1
-	IOT_DataPoint_Control
+    IOT_DataPoint_Control
 #endif
 };
 
@@ -126,7 +126,7 @@ const iot_cloud_if_t Cloud =
 #endif
 };
 
-#if CONFIG_SYSTEM_TIMER_ENABLE == 1
+#if CONFIG_SYSTEM_KEY_ENABLE == 1
 const iot_keys_if_t Key =
 {
     IOT_KEY_Init,
