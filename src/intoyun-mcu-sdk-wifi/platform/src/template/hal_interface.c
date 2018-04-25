@@ -12,6 +12,10 @@ void HAL_Free(void *ptr)
 {
 }
 
+void HAL_SystemReboot(void)
+{
+}
+
 uint32_t HAL_UptimeMs(void)
 {
     return 0;

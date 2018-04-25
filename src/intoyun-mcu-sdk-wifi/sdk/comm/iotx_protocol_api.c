@@ -487,18 +487,18 @@ bool IOT_Protocol_ParserInit(void)
             int r = ProtocolParserWaitFinalResp(NULL,NULL,1000);
             if(RESP_OK == r) {
                 break;
-            }else if (i==0 && !retried_after_reset){
+            } else if (i==0 && !retried_after_reset){
                 retried_after_reset = true; // only perform reset & retry sequence once
                 i = 10;
             }
         }
 
-        if (i < 0){
+        if (i < 0) {
             continue_cancel = true;
             log_v("[ No Reply from Modem ]\r\n");
         }
 
-        if (continue_cancel){
+        if (continue_cancel) {
             ProtocolParserCancel();
             return false; //串口不通 通讯失败
         }
