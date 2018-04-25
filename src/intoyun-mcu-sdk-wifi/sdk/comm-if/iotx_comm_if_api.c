@@ -68,7 +68,7 @@ static void cloud_data_receive_callback(uint8_t *data, uint32_t len)
 {
     log_d("cloud_data_receive_callback");
 #if CONFIG_CLOUD_DATAPOINT_ENABLED == 1
-    intoyunParseReceiveDatapoints(data, len);
+    IOT_DataPoint_ParseReceiveDatapoints(data, len);
 #endif
     IOT_SYSTEM_NotifyEvent(event_cloud_comm, ep_cloud_comm_data, (uint8_t *)data, len);
 }
@@ -142,7 +142,7 @@ int IOT_Comm_SendData(const uint8_t *data, uint16_t datalen)
 int IOT_Comm_Yield(void)
 {
     if(IOT_Comm_IsConnected()) {
-        intoyunSendDatapointAutomatic();
+        IOT_DataPoint_SendDatapointAutomatic();
     }
 
     IOT_Protocol_loop();
