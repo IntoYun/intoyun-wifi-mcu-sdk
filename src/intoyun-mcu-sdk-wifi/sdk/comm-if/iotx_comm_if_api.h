@@ -38,9 +38,9 @@ iotx_conn_state_t iotx_get_conn_state(void);
 void iotx_set_conn_state(iotx_conn_state_t newState);
 
 int IOT_Comm_Init(void);
-int IOT_Comm_Connect(void);
+void IOT_Comm_Connect(void);
 bool IOT_Comm_IsConnected(void);
-int IOT_Comm_Disconnect(void);
+void IOT_Comm_Disconnect(void);
 int IOT_Comm_SendData(const uint8_t *data, uint16_t dataLen);
 int IOT_Comm_Yield(void);
 

@@ -28,9 +28,9 @@ extern "C" {
 
 typedef struct
 {
-    int (*connect)(void);
+    void (*connect)(void);
     bool (*connected)(void);
-    int (*disconnect)(void);
+    void (*disconnect)(void);
     //发送自定义数据
     int (*sendCustomData)(const uint8_t *buffer, uint16_t length);
 #if CONFIG_CLOUD_DATAPOINT_ENABLED == 1
@@ -46,8 +46,8 @@ typedef struct
     read_datapoint_result_t (*readDatapointNumberInt32)(const uint16_t dpID, int32_t *value);
     read_datapoint_result_t (*readDatapointNumberDouble)(const uint16_t dpID, double *value);
     read_datapoint_result_t (*readDatapointEnum)(const uint16_t dpID, int *value);
-    read_datapoint_result_t (*readDatapointString)(const uint16_t dpID, char *value);
-    read_datapoint_result_t (*readDatapointBinary)(const uint16_t dpID, uint8_t *value, uint16_t len);
+    read_datapoint_result_t (*readDatapointString)(const uint16_t dpID, char **value);
+    read_datapoint_result_t (*readDatapointBinary)(const uint16_t dpID, uint8_t **value, uint16_t *len);
     //写数据点
     void (*writeDatapointBool)(const uint16_t dpID, bool value);
     void (*writeDatapointNumberInt32)(const uint16_t dpID, int32_t value);

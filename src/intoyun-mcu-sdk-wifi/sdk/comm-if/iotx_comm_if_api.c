@@ -85,10 +85,9 @@ int IOT_Comm_Init(void)
     return 0;
 }
 
-int IOT_Comm_Connect(void)
+void IOT_Comm_Connect(void)
 {
     IOT_Protocol_Join(2);
-    return 0;
 }
 
 bool IOT_Comm_IsConnected(void)
@@ -99,10 +98,9 @@ bool IOT_Comm_IsConnected(void)
     return false;
 }
 
-int IOT_Comm_Disconnect(void)
+void IOT_Comm_Disconnect(void)
 {
     IOT_Protocol_Join(1);
-    return 0;
 }
 
 int IOT_Comm_SendData(const uint8_t *data, uint16_t datalen)
