@@ -1,27 +1,9 @@
 # 平台相关隐藏文件
-.settings/*
-.cproject
-.project
 .DS_Store
-
-#项目临时工程
-DebugConfig
-Listings
-Objects
-RTE
-*.uvguix.*
-*.scvd
 
 # gtags相关文件
 GPATH
 GRTAGS
 GTAGS
 ctags
-
-# 工程临时文件
-.intoiotenvs
-size
-
-src/user/inc
-src/user/src
 
