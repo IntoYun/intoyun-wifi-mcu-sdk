@@ -16,21 +16,13 @@
  *
  */
 
-#ifndef __IOT_EXPORT_H__
-#define __IOT_EXPORT_H__
+#ifndef __IOTX_LOG_INTERNAL_H__
+#define __IOTX_LOG_INTERNAL_H__
 
-#ifdef __cplusplus
-extern "C" {
+//these functions do not check level versus MOLMC_LOCAL_LEVEL, this should be done in iotx_log_api.h
+void molmc_log_buffer_hex_internal(const char *tag, const void *buffer, uint16_t buff_len, molmc_log_level_t level);
+void molmc_log_buffer_char_internal(const char *tag, const void *buffer, uint16_t buff_len, molmc_log_level_t level);
+void molmc_log_buffer_hexdump_internal( const char *tag, const void *buffer, uint16_t buff_len, molmc_log_level_t log_level);
+
 #endif
-
-#include "iot_import.h"
-#include "exports/iot_export_cloud.h"
-#include "exports/iot_export_system.h"
-#include "exports/iot_export_log.h"
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  /* __IOT_EXPORT_H__ */
 

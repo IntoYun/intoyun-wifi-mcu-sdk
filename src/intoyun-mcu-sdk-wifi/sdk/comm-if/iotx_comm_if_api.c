@@ -21,6 +21,8 @@
 #include "iotx_system_api.h"
 #include "iotx_datapoint_api.h"
 
+const static char *TAG = "sdk:comm-if";
+
 static int iotx_conninfo_inited = 0;
 static iotx_conn_state_t iotx_conn_state = IOTX_CONN_STATE_INITIALIZED;
 
@@ -61,7 +63,7 @@ void iotx_set_conn_state(iotx_conn_state_t newState)
 
 static void cloud_data_receive_callback(uint8_t *data, uint32_t len)
 {
-    log_d("cloud_data_receive_callback");
+    MOLMC_LOGD(TAG, "cloud_data_receive_callback");
 #if CONFIG_CLOUD_DATAPOINT_ENABLED == 1
     IOT_DataPoint_ParseReceiveDatapoints(data, len);
 #endif
@@ -105,7 +107,7 @@ void IOT_Comm_Disconnect(void)
 
 int IOT_Comm_SendData(const uint8_t *data, uint16_t datalen)
 {
-    log_d("IOT_Comm_SendData");
+    MOLMC_LOGD(TAG, "IOT_Comm_SendData");
 
     if(!IOT_Comm_IsConnected()) {
         return -1;

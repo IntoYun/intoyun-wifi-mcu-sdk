@@ -54,7 +54,7 @@ static void TimerListInsert(iotx_timer_t *obj)
     iotx_timer_t *cur = timerListHead->next;
 
     if( ( obj == NULL ) || ( TimerExists( obj ) == true ) ) {
-        //log_v("timer is exists\r\n");
+        //MOLMC_LOGV(TAG, "timer is exists\r\n");
         return;
     }
 
@@ -150,7 +150,7 @@ void IOT_TIMER_Register(uint8_t num, uint32_t period, bool oneShot, cbTimerFunc 
 
     iotx_timer_t *p = (iotx_timer_t*)malloc(sizeof(iotx_timer_t));
     if(p == NULL) {
-        //log_v("error malloc\r\n");
+        //MOLMC_LOGV(TAG, "error malloc\r\n");
         return;
     }
     p->timerNum= num;
@@ -161,7 +161,7 @@ void IOT_TIMER_Register(uint8_t num, uint32_t period, bool oneShot, cbTimerFunc 
     p->timerCbFunc = cbFunc;
     p->next = NULL;
 
-    //log_v("timerNum=%d\r\n",p->timerNum);
+    //MOLMC_LOGV(TAG, "timerNum=%d\r\n",p->timerNum);
     TimerListInsert(p);
 }
 

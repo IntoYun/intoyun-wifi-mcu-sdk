@@ -126,6 +126,13 @@ const iot_cloud_if_t Cloud =
 #endif
 };
 
+
+const iot_log_if_t Log =
+{
+    molmc_log_level_set,
+    molmc_log_set_output
+};
+
 #if CONFIG_SYSTEM_KEY_ENABLE == 1
 const iot_keys_if_t Key =
 {

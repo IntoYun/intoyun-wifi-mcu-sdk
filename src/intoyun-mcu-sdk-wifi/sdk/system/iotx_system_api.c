@@ -20,6 +20,8 @@
 #include "iotx_system_api.h"
 #include "iotx_protocol_api.h"
 
+const static char *TAG = "sdk:system";
+
 static event_handler_t eventHandler = NULL;
 static iotx_work_mode_t iotx_work_mode = IOTX_WORK_MODE_NORMAL;
 
@@ -64,10 +66,10 @@ void IOT_SYSTEM_GetModuleInfo(char *moduleVersion, char *moduleType, char *devic
         return;
     }
 
-    log_v("moduleVer = %s\r\n",info.module_version);
-    log_v("moduleType = %s\r\n",info.module_type);
-    log_v("deviceId = %s\r\n",info.device_id);
-    log_v("atmode = %d\r\n",info.at_mode);
+    MOLMC_LOGV(TAG, "moduleVer = %s\r\n",info.module_version);
+    MOLMC_LOGV(TAG, "moduleType = %s\r\n",info.module_type);
+    MOLMC_LOGV(TAG, "deviceId = %s\r\n",info.device_id);
+    MOLMC_LOGV(TAG, "atmode = %d\r\n",info.at_mode);
 
     strncpy(moduleVersion, info.module_version, sizeof(info.module_version));
     strncpy(moduleType, info.module_type, sizeof(info.module_type));
@@ -148,9 +150,9 @@ uint8_t IOT_SYSTEM_GetStatus(char *ssid, uint32_t *ipAddr, int *rssi)
     }
 
     if(moduleStatus.module_status != 1) {
-        log_v("ssid=%s\r\n",moduleStatus.wifi.ssid);
-        log_v("ipAddr=%d\r\n",moduleStatus.wifi.ipAddr);
-        log_v("rssi=%d\r\n",moduleStatus.wifi.rssi);
+        MOLMC_LOGV(TAG, "ssid=%s\r\n",moduleStatus.wifi.ssid);
+        MOLMC_LOGV(TAG, "ipAddr=%d\r\n",moduleStatus.wifi.ipAddr);
+        MOLMC_LOGV(TAG, "rssi=%d\r\n",moduleStatus.wifi.rssi);
         strncpy(ssid,moduleStatus.wifi.ssid,sizeof(moduleStatus.wifi.ssid));
         *ipAddr = moduleStatus.wifi.ipAddr;
         *rssi = moduleStatus.wifi.rssi;

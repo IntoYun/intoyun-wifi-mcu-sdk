@@ -16,21 +16,35 @@
  *
  */
 
-#ifndef __IOT_EXPORT_H__
-#define __IOT_EXPORT_H__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef __IOT_IMPORT_UTILS_H__
+#define __IOT_IMPORT_UTILS_H__
 
 #include "iot_import.h"
-#include "exports/iot_export_cloud.h"
-#include "exports/iot_export_system.h"
-#include "exports/iot_export_log.h"
+#include "sdk_config.h"
+#include "lite-utils.h"
+#include "utils_common.h"
+#include "utils_epoch_time.h"
+#include "utils_list.h"
+#include "utils_net.h"
+#include "utils_timer.h"
+#include "utils_aes.h"
+#include "utils_base64.h"
+#include "utils_cJSON.h"
+#include "utils_cmac.h"
+#include "utils_hmac.h"
+#include "utils_md5.h"
+#include "utils_sha1.h"
 
-#ifdef __cplusplus
-}
-#endif
+#ifndef MIN
+#define MIN(x,y)  ((x) < (y) ? (x) : (y))
+#endif /* ifndef MIN */
 
-#endif  /* __IOT_EXPORT_H__ */
+#ifndef MAX
+#define MAX(x,y)  ((x) > (y) ? (x) : (y))
+#endif /* ifndef MAX */
+
+uint32_t timerGetId(void);
+bool timerIsEnd(uint32_t timerID, uint32_t time);
+
+#endif /* _IOT_IMPORT_UTILS_H_ */
 

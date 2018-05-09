@@ -10,8 +10,8 @@ extern "C" {
 
 #define LED_PIN             GPIO_PIN_0
 #define LED_GPIO_PORT       GPIOB
-#define LED_ON                HAL_GPIO_WritePin(LED_GPIO_PORT,LED_PIN, GPIO_PIN_RESET)
-#define LED_OFF               HAL_GPIO_WritePin(LED_GPIO_PORT,LED_PIN, GPIO_PIN_SET)
+#define LED_ON              HAL_GPIO_WritePin(LED_GPIO_PORT,LED_PIN, GPIO_PIN_RESET)
+#define LED_OFF             HAL_GPIO_WritePin(LED_GPIO_PORT,LED_PIN, GPIO_PIN_SET)
 
 #define KEY_PIN             GPIO_PIN_7
 #define KEY_GPIO_PORT       GPIOA

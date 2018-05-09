@@ -22,6 +22,8 @@
 #include "iotx_system_api.h"
 #include "iotx_comm_if_api.h"
 
+const static char *TAG = "sdk:protocol";
+
 #define MAX_SIZE        512  //!< max expected messages (used with RX)
 
 //! check for timeout
@@ -368,7 +370,7 @@ static int ProtocolParserWaitFinalResp(callbackPtr cb, void* param, uint32_t tim
             //handle unsolicited commands here
             if (type == TYPE_PLUS) {
                 const char* cmd = buf+1;
-                log_v("cmd = %s\r\n",cmd);
+                MOLMC_LOGV(TAG, "cmd = %s\r\n",cmd);
                 int a,b,c,d;
                 int event;
                 iotx_conn_state_t conn_state;
@@ -447,7 +449,7 @@ void IOT_Protocol_PutPipe(uint8_t c)
 
 bool IOT_Protocol_ParserInit(void)
 {
-    PipeInit(&pipeRx,PIPE_MAX_SIZE,NULL);
+    PipeInit(&pipeRx, CONFIG_PIPE_MAX_SIZE, NULL);
 
     if(!parserInitDone) {
         cancelAllOperations = false;
@@ -472,7 +474,7 @@ bool IOT_Protocol_ParserInit(void)
 
         if (i < 0) {
             continue_cancel = true;
-            log_v("[ No Reply from Modem ]\r\n");
+            MOLMC_LOGV(TAG, "[ No Reply from Modem ]\r\n");
         }
 
         if (continue_cancel) {
@@ -481,7 +483,7 @@ bool IOT_Protocol_ParserInit(void)
         }
 
         ProtocolParserSendFormated("ATE0\r\n"); //关闭回显
-        log_v("protocol parser init done\r\n");
+        MOLMC_LOGV(TAG, "protocol parser init done\r\n");
         parserInitDone = true;
         return true;
     } else {
@@ -615,7 +617,7 @@ int IOT_Protocol_SetMode(uint8_t mode, uint32_t timeout)
         if (RESP_OK == ProtocolParserWaitFinalResp((callbackPtr)ProtocolQueryModeCallback, &status,5000)) {
         }
     }
-    log_v("mode status=%d\r\n",status);
+    MOLMC_LOGV(TAG, "mode status=%d\r\n",status);
     return status;
 }
 

@@ -16,21 +16,27 @@
  *
  */
 
-#ifndef __IOT_EXPORT_H__
-#define __IOT_EXPORT_H__
+#ifndef __IOT_EXPORT_LOG_H__
+#define __IOT_EXPORT_LOG_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "iot_import.h"
-#include "exports/iot_export_cloud.h"
-#include "exports/iot_export_system.h"
-#include "exports/iot_export_log.h"
+#include "iotx_log_api.h"
+
+typedef struct
+{
+    void (*setLogLevel)(const char* tag, molmc_log_level_t level);
+    log_output_fn_t (*setLogOutput)(log_output_fn_t func);
+} iot_log_if_t;
+
+extern const iot_log_if_t Log;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __IOT_EXPORT_H__ */
+
+#endif
 

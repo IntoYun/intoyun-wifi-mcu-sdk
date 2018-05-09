@@ -129,8 +129,6 @@ enum {
 #define CUSTOMER_DEFINE_DATA     0x32
 #define INTOYUN_DATAPOINT_DATA   0x31
 
-#define PIPE_MAX_SIZE 256
-
 typedef struct {
     char *_b;        //!< buffer
     char *_a;        //!< allocated buffer

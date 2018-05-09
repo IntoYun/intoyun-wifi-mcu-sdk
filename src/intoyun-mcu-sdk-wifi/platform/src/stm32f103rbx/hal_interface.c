@@ -116,12 +116,21 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     }
 }
 
-void HAL_SystemInit(void)
+void *HAL_MutexCreate(void)
 {
-    HAL_Init();
-    SystemClockConfig();
-    USART2_Init();
-    USART1_Init();
+    return NULL;
+}
+
+void HAL_MutexDestroy(void *mutex)
+{
+}
+
+void HAL_MutexLock(void *mutex)
+{
+}
+
+void HAL_MutexUnlock(void *mutex)
+{
 }
 
 void *HAL_Malloc(uint32_t size)
@@ -132,6 +141,14 @@ void *HAL_Malloc(uint32_t size)
 void HAL_Free(void *ptr)
 {
     free(ptr);
+}
+
+void HAL_SystemInit(void)
+{
+    HAL_Init();
+    SystemClockConfig();
+    USART2_Init();
+    USART1_Init();
 }
 
 void HAL_SystemReboot(void)
@@ -152,13 +169,8 @@ void HAL_CommWrite(uint8_t c)
     HAL_UART_Transmit(&huart1, &data, 1, 100);
 }
 
-void HAL_Print(char *data, uint16_t len)
+void HAL_Print(const char * output)
 {
-    int n;
-    uint8_t tmp = 0;
-    for(n=0; n<len; n++) {
-        tmp = data[n];
-        HAL_UART_Transmit(&huart2, &tmp, 1, 100);
-    }
+    HAL_UART_Transmit(&huart2, output, strlen(output), 100);
 }
 

@@ -54,7 +54,7 @@ uint16_t KeyGetValue(void)
 //短按键执行
 void KeyClickHandle(void)
 {
-    log_v("key is click\r\n");
+    MOLMC_LOGV(TAG, "key is click\r\n");
 }
 
 //长按键执行 可根据按键时间来执行不同的操作
@@ -62,15 +62,15 @@ void KeyLongPressHandle(uint32_t ms)
 {
     if(ms >= 9000) //按键时间大于9s
     {
-        log_v("key is long press 9s\r\n");
+        MOLMC_LOGV(TAG, "key is long press 9s\r\n");
     }
     else if(ms >= 6000)
     {
-        log_v("key is long press 6s\r\n");
+        MOLMC_LOGV(TAG, "key is long press 6s\r\n");
     }
     else if(ms >= 3000)
     {
-        log_v("key is long press 3s\r\n");
+        MOLMC_LOGV(TAG, "key is long press 3s\r\n");
         //模组进入配置模式
         System.setModuleMode(MODE_IMLINK_CONFIG, 0);
     }
