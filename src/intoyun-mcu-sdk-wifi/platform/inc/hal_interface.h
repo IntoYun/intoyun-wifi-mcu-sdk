@@ -2,18 +2,18 @@
 #define __HAL_INTERFACE_H__
 
 /**
- * @brief Create a mutex.
+ * @brief 创建一个互斥量
  *
- * @return NULL, initialize mutex failed; not NULL, the mutex handle.
+ * @return 空, 创建失败; 非空, 互斥量句柄.
  * @see None.
  * @note None.
  */
 void *HAL_MutexCreate(void);
 
 /**
- * @brief Destroy the specified mutex object, it will release related resource.
+ * @brief 销毁一个互斥量
  *
- * @param [in] mutex @n The specified mutex.
+ * @param [in] mutex @n 指定互斥量句柄
  * @return None.
  * @see None.
  * @note None.
@@ -21,9 +21,9 @@ void *HAL_MutexCreate(void);
 void HAL_MutexDestroy(void *mutex);
 
 /**
- * @brief Waits until the specified mutex is in the signaled state.
+ * @brief 加锁一个互斥量.
  *
- * @param [in] mutex @n the specified mutex.
+ * @param [in] mutex @n 指定互斥量句柄
  * @return None.
  * @see None.
  * @note None.
@@ -31,9 +31,9 @@ void HAL_MutexDestroy(void *mutex);
 void HAL_MutexLock(void *mutex);
 
 /**
- * @brief Releases ownership of the specified mutex object..
+ * @brief 解锁一个互斥量
  *
- * @param [in] mutex @n the specified mutex.
+ * @param [in] mutex @n 指定互斥量句柄
  * @return None.
  * @see None.
  * @note None.
