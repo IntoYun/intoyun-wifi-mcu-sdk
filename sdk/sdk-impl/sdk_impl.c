@@ -79,7 +79,7 @@ const iot_system_if_t System =
     IOT_SYSTEM_GetMode,
     IOT_SYSTEM_SetDeviceInfo,
     IOT_SYSTEM_GetModuleInfo,
-    IOT_SYSTEM_Restart,
+    IOT_SYSTEM_Reboot,
     IOT_SYSTEM_Restore,
     IOT_SYSTEM_PutPipe,
     IOT_SYSTEM_GetNetTime,

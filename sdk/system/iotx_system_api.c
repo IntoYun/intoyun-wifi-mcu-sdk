@@ -111,7 +111,7 @@ iotx_work_mode_t IOT_SYSTEM_GetMode(void)
     return (iotx_work_mode_t)IOT_Protocol_QueryMode();
 }
 
-bool IOT_SYSTEM_Restart(void)
+bool IOT_SYSTEM_Reboot(void)
 {
     return IOT_Protocol_Reboot();
 }

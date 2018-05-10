@@ -74,7 +74,7 @@ void IOT_SYSTEM_SetEventCallback(event_handler_t handler);
 void IOT_SYSTEM_NotifyEvent(iotx_system_event_t event, iotx_system_events_param_t param, uint8_t *data, uint32_t len);
 bool IOT_SYSTEM_SetMode(iotx_work_mode_t mode, uint32_t timeout);
 iotx_work_mode_t IOT_SYSTEM_GetMode(void);
-bool IOT_SYSTEM_Restart(void);
+bool IOT_SYSTEM_Reboot(void);
 bool IOT_SYSTEM_Restore(void);
 void IOT_SYSTEM_PutPipe(uint8_t value);
 bool IOT_SYSTEM_GetNetTime(char *net_time, char *timestamp);
