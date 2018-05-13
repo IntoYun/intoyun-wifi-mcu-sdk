@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include "sdk_config.h"
 
 #ifdef __cplusplus
@@ -224,7 +225,7 @@ void molmc_log_write(molmc_log_level_t level, const char* tag, const char* forma
 #define LOG_RESET_COLOR
 #endif //CONFIG_LOG_COLORS
 
-#define LOG_FORMAT(letter, format)  LOG_COLOR_ ## letter #letter " [%010u]:[%-12.12s]: " format LOG_RESET_COLOR "\n"
+#define LOG_FORMAT(letter, format)  LOG_COLOR_ ## letter #letter " [%010lu]:[%-12.12s]: " format LOG_RESET_COLOR "\n"
 
 #define MOLMC_LOGE( tag, format, ... ) MOLMC_LOG_LEVEL_LOCAL(MOLMC_LOG_ERROR,   tag, format, ##__VA_ARGS__)
 #define MOLMC_LOGW( tag, format, ... ) MOLMC_LOG_LEVEL_LOCAL(MOLMC_LOG_WARN,    tag, format, ##__VA_ARGS__)

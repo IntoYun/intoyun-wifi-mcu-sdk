@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <string.h>
 #include "stm32f1xx_hal.h"
 
 UART_HandleTypeDef huart1; //USART1用于与模组通讯
@@ -64,7 +66,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     GPIO_InitTypeDef GPIO_InitStruct;
     if(huart->Instance == USART1) {
         /* Peripheral clock enable */
-        __USART1_CLK_ENABLE();
+        __HAL_RCC_USART1_CLK_ENABLE();
         __HAL_RCC_GPIOA_CLK_ENABLE();
         /**USART1 GPIO Configuration
            PA9     ------> USART1_TX
@@ -86,7 +88,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
         __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
     } else if(huart->Instance == USART2) {
         /* Peripheral clock enable */
-        __USART2_CLK_ENABLE();
+        __HAL_RCC_USART2_CLK_ENABLE();
         __HAL_RCC_GPIOA_CLK_ENABLE();
         /**USART2 GPIO Configuration
            PA2     ------> USART2_TX
@@ -104,12 +106,12 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 {
     if(huart->Instance == USART1) {
         /* Peripheral clock disable */
-        __USART1_CLK_DISABLE();
+        __HAL_RCC_USART1_CLK_DISABLE();
         HAL_GPIO_DeInit(GPIOA, GPIO_PIN_9|GPIO_PIN_10);
         /* Peripheral interrupt Deinit*/
         HAL_NVIC_DisableIRQ(USART1_IRQn);
     } else if(huart->Instance == USART2) {
-        __USART2_CLK_DISABLE();
+        __HAL_RCC_USART2_CLK_DISABLE();
         HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2|GPIO_PIN_3);
         /* Peripheral interrupt Deinit*/
         /* HAL_NVIC_DisableIRQ(USART2_IRQn); */
@@ -169,8 +171,8 @@ void HAL_CommWrite(uint8_t c)
     HAL_UART_Transmit(&huart1, &data, 1, 100);
 }
 
-void HAL_Print(const char * output)
+void HAL_Print(char * output)
 {
-    HAL_UART_Transmit(&huart2, output, strlen(output), 100);
+    HAL_UART_Transmit(&huart2, (uint8_t *)output, strlen(output), 100);
 }
 

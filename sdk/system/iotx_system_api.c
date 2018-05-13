@@ -19,6 +19,7 @@
 #include <string.h>
 #include "iotx_system_api.h"
 #include "iotx_protocol_api.h"
+#include "iotx_comm_if_api.h"
 
 const static char *TAG = "sdk:system";
 
@@ -150,9 +151,9 @@ uint8_t IOT_SYSTEM_GetStatus(char *ssid, uint32_t *ipAddr, int *rssi)
     }
 
     if(moduleStatus.module_status != 1) {
-        MOLMC_LOGV(TAG, "ssid=%s\r\n",moduleStatus.wifi.ssid);
-        MOLMC_LOGV(TAG, "ipAddr=%d\r\n",moduleStatus.wifi.ipAddr);
-        MOLMC_LOGV(TAG, "rssi=%d\r\n",moduleStatus.wifi.rssi);
+        MOLMC_LOGV(TAG, "ssid = %s\r\n", moduleStatus.wifi.ssid);
+        MOLMC_LOGV(TAG, "ipAddr = %lu\r\n", moduleStatus.wifi.ipAddr);
+        MOLMC_LOGV(TAG, "rssi = %d\r\n", moduleStatus.wifi.rssi);
         strncpy(ssid,moduleStatus.wifi.ssid,sizeof(moduleStatus.wifi.ssid));
         *ipAddr = moduleStatus.wifi.ipAddr;
         *rssi = moduleStatus.wifi.rssi;

@@ -27,7 +27,7 @@ const static char *TAG = "sdk:protocol";
 #define MAX_SIZE        512  //!< max expected messages (used with RX)
 
 //! check for timeout
-#define TIMEOUT(t, ms)  ((ms != TIMEOUT_BLOCKING) && ((millis() - t) > ms))
+#define TIMEOUT(t, ms)  ((ms != TIMEOUT_BLOCKING) && ((HAL_UptimeMs() - t) > ms))
 
 
 pipe_t pipeRx; //定义串口数据接收缓冲区
@@ -53,11 +53,6 @@ static void PipeInit(pipe_t *pipe, int n, char *b)//默认b = NULL
     pipe->_s = n;
 }
 
-static bool PipeWriteable(pipe_t *pipe)
-{
-    return PipeFree(pipe) > 0;
-}
-
 /** Return the number of free elements in the buffer
   \return the number of free elements
   */
@@ -69,6 +64,10 @@ static int PipeFree(pipe_t *pipe)
     return s - 1;
 }
 
+static bool PipeWriteable(pipe_t *pipe)
+{
+    return PipeFree(pipe) > 0;
+}
 
 /* Add a single element to the buffer. (blocking)
    \param c the element to add.
@@ -362,7 +361,7 @@ static int ProtocolParserWaitFinalResp(callbackPtr cb, void* param, uint32_t tim
     if (cancelAllOperations) return WAIT;
 
     char buf[MAX_SIZE] = {0};
-    uint32_t start = millis();
+    uint32_t start = HAL_UptimeMs();
     do {
         int ret = ProtocolParserGetPacket(buf, sizeof(buf));
         if ((ret != WAIT) && (ret != NOT_FOUND)) {
@@ -373,7 +372,7 @@ static int ProtocolParserWaitFinalResp(callbackPtr cb, void* param, uint32_t tim
                 MOLMC_LOGV(TAG, "cmd = %s\r\n",cmd);
                 int a,b,c,d;
                 int event;
-                iotx_conn_state_t conn_state;
+                iotx_conn_state_t conn_state = IOTX_CONN_STATE_INITIALIZED;
                 wifi_info_t wifi;
                 uint16_t platformDataLen;
                 uint8_t *platformData;
@@ -730,7 +729,7 @@ bool IOT_Protocol_QueryStatus(module_status_t *status)
 }
 
 //发送数据点数据
-bool IOT_Protocol_SendData(uint8_t *buffer, uint16_t length)
+bool IOT_Protocol_SendData(const uint8_t *buffer, uint16_t length)
 {
     if (parserInitDone) {
         ProtocolParserSendFormated("AT+SENDDATA=%d\r\n",length);
@@ -749,6 +748,7 @@ bool IOT_Protocol_SendData(uint8_t *buffer, uint16_t length)
 bool IOT_Protocol_loop(void)
 {
     ProtocolParserWaitFinalResp(NULL, NULL, 0);
+    return true;
 }
 
 void IOT_Protocol_SetRevCallback(recCallback_t handler)

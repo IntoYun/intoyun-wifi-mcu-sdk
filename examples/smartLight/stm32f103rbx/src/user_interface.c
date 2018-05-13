@@ -26,7 +26,7 @@ void LedControl(bool level)
 void LedPinInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct;
-    __GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
     GPIO_InitStruct.Pin = LED_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
@@ -38,7 +38,7 @@ void LedPinInit(void)
 void KeyGpioInit(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct;
-    __GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     GPIO_InitStruct.Pin = KEY_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
@@ -72,7 +72,7 @@ void KeyLongPressHandle(uint32_t ms)
     {
         MOLMC_LOGV(TAG, "key is long press 3s\r\n");
         //模组进入配置模式
-        System.setModuleMode(MODE_IMLINK_CONFIG, 0);
+        System.setModuleMode(IOTX_WORK_MODE_IMLINK_CONFIG, 0);
     }
 }
 

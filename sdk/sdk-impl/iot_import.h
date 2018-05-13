@@ -28,6 +28,7 @@ extern "C" {
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include <inttypes.h>
 
 #include "hal_interface.h"

@@ -187,9 +187,6 @@ typedef struct{
 typedef int (*callbackPtr)(int type, const char *buf, int len, void *param);
 typedef void (*recCallback_t)(uint8_t *data, uint32_t len);
 
-static int PipeFree(pipe_t *pipe);
-static int PipeSize(pipe_t *pipe);
-
 //AT指令解析
 bool IOT_Protocol_ParserInit(void);
 void IOT_Protocol_PutPipe(uint8_t c);
@@ -197,6 +194,7 @@ bool IOT_Protocol_Reboot(void);
 bool IOT_Protocol_Restore(void);
 bool IOT_Protocol_QueryInfo(module_info_t *info);
 bool IOT_Protocol_QueryDevice(module_info_t *info);
+bool IOT_Protocol_SetDeviceInfo(char *product_id, char *hardware_version, char *software_version);
 bool IOT_Protocol_SetDevice(char *product_id, char *hardware_version, char *software_version);
 bool IOT_Protocol_QueryJoinAP(module_status_t *status);
 bool IOT_Protocol_JoinAP(char *ssid,char *pwd);
@@ -208,7 +206,7 @@ bool IOT_Protocol_SetBasicParams(int zone, char *server_domain,int server_port,c
 bool IOT_Protocol_QueryNetTime(network_time_t *netTime);
 bool IOT_Protocol_Join(uint8_t mode);
 bool IOT_Protocol_QueryStatus(module_status_t *status);
-bool IOT_Protocol_SendData(uint8_t *buffer, uint16_t length);
+bool IOT_Protocol_SendData(const uint8_t *buffer, uint16_t length);
 
 bool IOT_Protocol_loop(void);
 void IOT_Protocol_SetRevCallback(recCallback_t handler);
