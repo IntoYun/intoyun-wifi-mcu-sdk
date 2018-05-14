@@ -2,6 +2,9 @@
 #include "user_interface.h"
 #include "stm32f1xx_hal.h"
 
+
+const static char *TAG = "user:ui";
+
 static bool ledFlag = false;
 
 void LedBlink(void)
